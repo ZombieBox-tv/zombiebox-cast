@@ -19,3 +19,7 @@ issues/milestones can be attached to the shared GitHub Project once remotes exis
 
 Updates the shared protocol/transport dependency only. Receiver-aware profiles, rotation/recovery and audio eligibility remain open.
 No product milestone or physical/account gate is completed by this checkpoint.
+
+## dev.12 increment
+
+Consumes receiver video limits for resolution/fps/bitrate; aligned aspect-ratio sizing. Rotation/audio recovery and physical evidence remain open.

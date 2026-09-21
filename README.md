@@ -37,3 +37,9 @@ legacy runtime or end-to-end account/media compatibility.
 Dev.11 updates the pinned shared protocol/transport for the playback request timeout.
 The sender's capture/rotation/audio behavior is unchanged; no new Cast runtime
 compatibility is claimed by this dependency checkpoint.
+
+Dev.12 consumes CastGrant video constraints instead of always encoding 720p:
+receiver-specific maximum dimensions, fps and bitrate are validated and applied.
+Source aspect ratio is retained with 16-pixel alignment. Unknown receiver support
+uses a conservative candidate; rotation reconfiguration, audio eligibility feedback,
+encoder recovery and physical evidence remain open.

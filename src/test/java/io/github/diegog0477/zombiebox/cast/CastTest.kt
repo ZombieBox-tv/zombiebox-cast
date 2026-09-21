@@ -81,4 +81,19 @@ class CastTest {
         work.removeAt(0)()
         assertEquals(listOf("grant"), repo.stopped)
     }
+
+    @Test
+    fun negotiatedVideoBudgetBoundsBothOrientations() {
+        val profile = io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo()
+        for ((width, height) in listOf(Pair(1920, 1080), Pair(1080, 1920))) {
+            val (w, h) = profile.dimensions(width, height)
+            assertTrue(w <= 640 && h <= 360)
+            assertEquals(0, w % 16)
+            assertEquals(0, h % 16)
+        }
+        try {
+            io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo(4096, 2160)
+            fail("unbounded grant")
+        } catch (_: IllegalArgumentException) {}
+    }
 }

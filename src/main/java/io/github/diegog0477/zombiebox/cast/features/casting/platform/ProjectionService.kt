@@ -13,6 +13,7 @@ import android.os.*
 import android.util.Base64
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtpH264
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
 import io.github.diegog0477.zombiebox.shared.GatewayFailure
@@ -22,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("DEPRECATION")
 class ProjectionService : Service() {
+    private var videoProfile = CastVideo()
+
     companion object {
         @Volatile
         var active = false
@@ -63,6 +66,13 @@ class ProjectionService : Service() {
                 }
         shareAudio = intent.getBooleanExtra("audio", false)
         try {
+            videoProfile =
+                CastVideo(
+                    intent.getIntExtra("maxWidth", 640),
+                    intent.getIntExtra("maxHeight", 360),
+                    intent.getIntExtra("fps", 24),
+                    intent.getIntExtra("bitrate", 800000),
+                )
             val notification = notification()
             if (Build.VERSION.SDK_INT >= 29)
                 startForeground(
@@ -119,17 +129,15 @@ class ProjectionService : Service() {
             audio = PlaybackAudioFactory.create(Build.VERSION.SDK_INT, shareAudio)
             audio?.prepare(projection)
             val metrics = resources.displayMetrics
-            val scale = minOf(1.0, 1280.0 / metrics.widthPixels, 720.0 / metrics.heightPixels)
-            val width = (metrics.widthPixels * scale).toInt().coerceAtLeast(32) / 16 * 16
-            val height = (metrics.heightPixels * scale).toInt().coerceAtLeast(32) / 16 * 16
+            val (width, height) = videoProfile.dimensions(metrics.widthPixels, metrics.heightPixels)
             val format =
                 MediaFormat.createVideoFormat("video/avc", width, height).apply {
                     setInteger(
                         MediaFormat.KEY_COLOR_FORMAT,
                         MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
                     )
-                    setInteger(MediaFormat.KEY_BIT_RATE, 2000000)
-                    setInteger(MediaFormat.KEY_FRAME_RATE, 30)
+                    setInteger(MediaFormat.KEY_BIT_RATE, videoProfile.bitrate)
+                    setInteger(MediaFormat.KEY_FRAME_RATE, videoProfile.fps)
                     setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
                     setInteger(
                         MediaFormat.KEY_PROFILE,

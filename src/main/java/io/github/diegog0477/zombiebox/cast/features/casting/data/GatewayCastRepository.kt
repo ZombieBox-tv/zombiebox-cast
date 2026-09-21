@@ -3,6 +3,7 @@ package io.github.diegog0477.zombiebox.cast.features.casting.data
 import android.content.SharedPreferences
 import android.os.Build
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGrant
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.repository.CastRepository
 import io.github.diegog0477.zombiebox.shared.GatewayApi
@@ -58,7 +59,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
                     "POST",
                     "/v1/devices/register",
                     JSONObject()
-                        .put("clientVersion", "cast-0.1.0-dev.5")
+                        .put("clientVersion", "cast-0.1.0-dev.12")
                         .put("protocolVersion", 1)
                         .put("installationId", id)
                         .put("pairingCode", code)
@@ -100,6 +101,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
 
     override fun create(receiver: String): CastGrant {
         val result = api.request("POST", "/v1/cast", JSONObject().put("receiverId", receiver))
+        val video = result.optJSONObject("video")
         return CastGrant(
             result.getString("castId"),
             URI(api.base).host,
@@ -107,6 +109,12 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
             result.getString("publishPath"),
             result.getString("publishUser"),
             result.getString("publishToken"),
+            CastVideo(
+                video?.optInt("maxWidth", 640) ?: 640,
+                video?.optInt("maxHeight", 360) ?: 360,
+                video?.optInt("fps", 24) ?: 24,
+                video?.optInt("bitrate", 800000) ?: 800000,
+            ),
         )
     }
 
