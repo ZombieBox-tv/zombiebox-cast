@@ -76,3 +76,7 @@ Phone-first dark/green dashboard, QR/manual consent, saved target selection/revo
 Full visual/capture policy, extended Remote, HEVC/4K and other product gates remain open; physical acceptance stays deferred.
 
 See the [native dependency policy](docs/native-dependencies.md) and [QR assessment](docs/qr-dependency.md). The strict no-native rule belongs to the TV thin Client.
+
+## dev.25 increment
+
+Consumes the additive protocol contract; capture and full visual redesign are unchanged and remain pending.

@@ -74,3 +74,7 @@ Phone-first dark/green dashboard, QR/manual consent, saved target selection/revo
 Full visual/capture policy, extended Remote, HEVC/4K and other product gates remain open; physical acceptance stays deferred.
 
 Verification: 13 JVM tests, debug/unsigned-release builds and lint pass. Debug APK: 1,310,760 bytes, minSdk21, with no `.so` files currently bundled. Gateway-generated QR decoding, consent states and deferred scan results have host coverage. Camera, focus, A/V and visual/device acceptance remain unverified.
+
+## dev.25 increment
+
+Consumes the additive protocol contract; capture and full visual redesign are unchanged and remain pending.
