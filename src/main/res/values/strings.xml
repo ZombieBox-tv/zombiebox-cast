@@ -14,9 +14,16 @@
     <string name="buffering">Connecting to your TV…</string>
     <string name="stopped">Screen sharing stopped</string>
     <string name="failed">Could not start sharing. Check the gateway and receiver.</string>
-    <string name="no_receivers">Enable screen receiving in your TV client settings and keep it open.</string>
-    <string name="consent">Android will ask what to share. You can stop at any time from the notification.</string>
-    <string name="audio_detail">Optional app audio requires Android 10 or newer and audio permission. Apps control whether their audio can be shared. The microphone is not captured.</string>
+    <string name="no_receivers">
+        Enable screen receiving in your TV client settings and keep it open.
+    </string>
+    <string name="consent">
+        Android will ask what to share. You can stop at any time from the notification.
+    </string>
+    <string name="audio_detail">
+        Optional app audio requires Android 10 or newer and audio permission. Apps control whether
+        their audio can be shared. The microphone is not captured.
+    </string>
     <string name="share_audio">Share app audio</string>
     <string name="channel">Screen sharing</string>
 </resources>
