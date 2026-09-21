@@ -14,7 +14,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
         require(uri.scheme in listOf("http","https") && uri.host!=null && uri.userInfo==null && uri.query==null && uri.fragment==null)
         val id=prefs.getString("installation",null) ?: UUID.randomUUID().toString().also { prefs.edit().putString("installation",it).commit() }
         val candidate=GatewayApi().apply { this.base=base }
-        val result=try { candidate.request("POST","/v1/devices/register",JSONObject().put("clientVersion","cast-0.1.0-dev.4").put("protocolVersion",1).put("installationId",id).put("pairingCode",code).put("platform",JSONObject().put("androidApi",Build.VERSION.SDK_INT).put("manufacturer",Build.MANUFACTURER).put("model",Build.MODEL)).put("display",JSONObject().put("touch",true))) } finally { candidate.close() }
+        val result=try { candidate.request("POST","/v1/devices/register",JSONObject().put("clientVersion","cast-0.1.0-dev.5").put("protocolVersion",1).put("installationId",id).put("pairingCode",code).put("platform",JSONObject().put("androidApi",Build.VERSION.SDK_INT).put("manufacturer",Build.MANUFACTURER).put("model",Build.MODEL)).put("display",JSONObject().put("touch",true))) } finally { candidate.close() }
         api.configure(base,result.getString("deviceId"),result.getString("deviceToken"))
         prefs.edit().putString("gateway",api.base).putString("device",api.device).putString("token",api.token).commit()
     }
