@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "gateway": "http://192.0.2.10:8090",
+  "invitationId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "secret": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

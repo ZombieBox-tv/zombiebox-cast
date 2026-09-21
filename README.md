@@ -1,6 +1,6 @@
 # zombiebox-cast
 
-Independent API21+ MediaProjection sender APK.
+Phone-first API21+ companion, remote and MediaProjection sender APK.
 
 This is an independent repository in the Zombie Box workspace. Remotes and hosted
 releases are not configured yet; local commits/tags and dependency pins are real.
@@ -68,3 +68,11 @@ No product or physical acceptance gate closes.
 
 Automatic gateway discovery, refresh/selection and viewport/system-bar correction. Full visual redesign and QR trust remain planned.
 No product or physical acceptance gate closes.
+
+
+## dev.24 increment
+
+Phone-first dark/green dashboard, QR/manual consent, saved target selection/revocation, gateway proof/reconnection and a discrete Remote screen. Cast may adopt assessed native dependencies; this increment adds only Java ZXing. APK versionCode 24.
+Full visual/capture policy, extended Remote, HEVC/4K and other product gates remain open; physical acceptance stays deferred.
+
+See the [native dependency policy](docs/native-dependencies.md) and [QR assessment](docs/qr-dependency.md). The strict no-native rule belongs to the TV thin Client.

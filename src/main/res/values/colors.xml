@@ -1,0 +1,7 @@
+<resources>
+    <color name="zombie_green">#4CEF69</color>
+    <color name="cast_background">#090F10</color>
+    <color name="cast_surface">#141C1F</color>
+    <color name="cast_text">#F3F6F5</color>
+    <color name="cast_muted">#A5B0B5</color>
+</resources>

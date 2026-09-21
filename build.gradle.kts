@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.diegog0477.zombiebox.cast"
         minSdk = 21
         targetSdk = 35
-        versionCode = 23
-        versionName = "0.1.0-dev.23"
+        versionCode = 24
+        versionName = "0.1.0-dev.24"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -26,5 +26,6 @@ kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarg
 
 dependencies {
     implementation(project(":shared"))
+    implementation("com.google.zxing:core:3.3.3")
     testImplementation("junit:junit:4.13.2")
 }

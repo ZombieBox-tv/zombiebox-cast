@@ -2,18 +2,20 @@ package io.github.diegog0477.zombiebox.cast
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Color
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.text.InputType
 import android.widget.*
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
 import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CastViewModel
-import io.github.diegog0477.zombiebox.cast.features.discovery.presentation.ui.DiscoveryPanel
+import io.github.diegog0477.zombiebox.cast.features.companion.data.GatewayCompanionRepository
+import io.github.diegog0477.zombiebox.cast.features.companion.platform.QrScanActivity
+import io.github.diegog0477.zombiebox.cast.features.companion.presentation.ui.PairingDialog
+import io.github.diegog0477.zombiebox.cast.features.companion.presentation.viewmodel.CompanionViewModel
 import io.github.diegog0477.zombiebox.cast.features.discovery.presentation.viewmodel.DiscoveryViewModel
+import io.github.diegog0477.zombiebox.cast.features.home.presentation.ui.CastDashboard
 import io.github.diegog0477.zombiebox.shared.GatewayDiscovery
 import java.util.concurrent.Executors
 
@@ -24,12 +26,14 @@ class CastActivity : Activity() {
     private lateinit var repository: GatewayCastRepository
     private lateinit var model: CastViewModel
     private lateinit var discoveryModel: DiscoveryViewModel
-    private lateinit var receivers: LinearLayout
+    private lateinit var dashboard: CastDashboard
+    private lateinit var companion: CompanionViewModel
+    private var resumed = false
     private lateinit var status: TextView
     private lateinit var audioStatus: TextView
     private lateinit var start: Button
     private var consent: Intent? = null
-    private lateinit var audio: CheckBox
+    private lateinit var audio: CompoundButton
     private var shareAudio = false
     private var capturePending = false
     private val serviceStatus =
@@ -45,13 +49,48 @@ class CastActivity : Activity() {
                         else -> R.string.stopped
                     }
                 )
+                dashboard.sharing(ProjectionService.active)
                 start.isEnabled =
                     !model.state.busy &&
                         model.state.selected.isNotEmpty() &&
                         !ProjectionService.active
             }
         }
-    private var receiverIds = emptyList<String>()
+    private var receiverKey = ""
+    private var companionKey = ""
+    private val companionTick =
+        object : Runnable {
+            override fun run() {
+                if (!resumed) return
+                companion.refresh()
+                handler.postDelayed(this, 1500)
+            }
+        }
+
+    private fun pairPhone() {
+        if (ProjectionService.active || capturePending) return
+        PairingDialog(
+                this,
+                discoveryModel,
+                { startActivityForResult(Intent(this, QrScanActivity::class.java), 103) },
+                { base, code -> companion.join(base, code, "") },
+            )
+            .show(repository.address)
+    }
+
+    private fun beginCapture() {
+        if (ProjectionService.active || capturePending) return
+        capturePending = true
+        shareAudio = audio.isChecked && Build.VERSION.SDK_INT >= 29
+        if (
+            Build.VERSION.SDK_INT >= 29 &&
+                shareAudio &&
+                checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
+                    android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
+            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 102)
+        else captureConsent()
+    }
 
     override fun onCreate(saved: Bundle?) {
         super.onCreate(saved)
@@ -70,124 +109,75 @@ class CastActivity : Activity() {
                 { work -> background.execute { work() } },
                 { work -> ui.post { work() } },
             )
-        val root =
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                val spacing = (20 * resources.displayMetrics.density).toInt()
-                setPadding(spacing, spacing, spacing, spacing)
-                setBackgroundColor(Color.rgb(10, 15, 16))
-            }
-        fun label(id: Int) =
-            TextView(this).apply {
-                setText(id)
-                setTextColor(Color.WHITE)
-                textSize = 18f
-                root.addView(this)
-            }
-        label(R.string.app_name).textSize = 28f
-        label(R.string.tagline)
-        val address =
-            EditText(this).apply {
-                setHint(R.string.gateway)
-                setText(repository.address)
-                setTextColor(Color.WHITE)
-                setHintTextColor(Color.LTGRAY)
-                setSingleLine(true)
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            }
-        val code =
-            EditText(this).apply {
-                setHint(R.string.code)
-                setTextColor(Color.WHITE)
-                setHintTextColor(Color.LTGRAY)
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                isSaveEnabled = false
-                setSingleLine(true)
-            }
-        root.addView(address)
-        root.addView(
-            DiscoveryPanel(this, discoveryModel) { candidate -> address.setText(candidate) }
-        )
-        root.addView(code)
-        root.addView(
-            Button(this).apply {
-                setText(R.string.connect)
-                setOnClickListener {
-                    val value = code.text.toString()
-                    code.setText("")
-                    model.connect(address.text.toString(), value)
-                }
-            }
-        )
-        root.addView(
-            Button(this).apply {
-                setText(R.string.refresh)
-                setOnClickListener { model.refresh() }
-            }
-        )
-        label(R.string.receivers)
-        receivers = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        root.addView(receivers)
-        status = label(R.string.ready)
-        label(R.string.consent)
-        label(R.string.audio_detail)
-        audioStatus = label(R.string.audio_waiting)
-        renderAudioStatus()
-        audio =
-            CheckBox(this).apply {
-                setText(R.string.share_audio)
-                setTextColor(Color.WHITE)
-                isEnabled = Build.VERSION.SDK_INT >= 29
-            }
-        root.addView(audio)
-        start =
-            Button(this).apply {
-                setText(R.string.start)
-                setOnClickListener {
-                    if (!ProjectionService.active) {
-                        capturePending = true
-                        shareAudio = audio.isChecked && Build.VERSION.SDK_INT >= 29
-                        if (
-                            Build.VERSION.SDK_INT >= 29 &&
-                                shareAudio &&
-                                checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
-                                    android.content.pm.PackageManager.PERMISSION_GRANTED
-                        )
-                            requestPermissions(
-                                arrayOf(android.Manifest.permission.RECORD_AUDIO),
-                                102,
-                            )
-                        else captureConsent()
-                    }
-                }
-            }
-        root.addView(start)
-        root.addView(
-            Button(this).apply {
-                setText(R.string.stop)
-                setOnClickListener {
-                    stopService(Intent(this@CastActivity, ProjectionService::class.java))
+        companion =
+            CompanionViewModel(
+                GatewayCompanionRepository(getSharedPreferences("cast", MODE_PRIVATE)),
+                { work -> background.execute { work() } },
+                { work -> ui.post { work() } },
+            )
+        dashboard =
+            CastDashboard(
+                this,
+                ::pairPhone,
+                {
+                    companion.refresh(reconnect = !ProjectionService.active && !capturePending)
+                    if (repository.paired) model.refresh()
+                },
+                ::beginCapture,
+                {
+                    stopService(Intent(this, ProjectionService::class.java))
                     status.setText(R.string.stopped)
+                },
+                companion::send,
+                { id -> if (!ProjectionService.active && !capturePending) companion.select(id) },
+                {
+                    if (!ProjectionService.active && !capturePending)
+                        android.app.AlertDialog.Builder(this)
+                            .setMessage(R.string.forget_confirm)
+                            .setPositiveButton(R.string.forget_phone) { _, _ -> companion.forget() }
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show()
+                },
+            )
+        status = dashboard.status
+        audioStatus = dashboard.audioStatus
+        audio = dashboard.audio
+        start = dashboard.start
+        dashboard.setOnApplyWindowInsetsListener { view, insets ->
+            view.setPadding(
+                insets.systemWindowInsetLeft,
+                insets.systemWindowInsetTop,
+                insets.systemWindowInsetRight,
+                insets.systemWindowInsetBottom,
+            )
+            insets
+        }
+        setContentView(dashboard)
+        companion.observer = { state ->
+            dashboard.companion(state)
+            if (!state.busy && !state.failed && !ProjectionService.active && !capturePending) {
+                repository.reload()
+                val key =
+                    state.target?.grant?.id.orEmpty() +
+                        state.target?.castAvailable +
+                        repository.address
+                if (key != companionKey && state.target != null) {
+                    companionKey = key
+                    model.refresh()
                 }
             }
-        )
-        setContentView(
-            ScrollView(this).apply {
-                isFillViewport = true
-                setBackgroundColor(Color.rgb(10, 15, 16))
-                setOnApplyWindowInsetsListener { view, insets ->
-                    view.setPadding(
-                        insets.systemWindowInsetLeft,
-                        insets.systemWindowInsetTop,
-                        insets.systemWindowInsetRight,
-                        insets.systemWindowInsetBottom,
-                    )
-                    insets
-                }
-                addView(root)
+        }
+        companion.paired = {
+            repository.reload()
+            if (repository.paired) model.refresh()
+            else {
+                receiverKey = ""
+                dashboard.receivers(emptyList(), "", model::select)
+                start.isEnabled = false
             }
-        )
-        discoveryModel.refresh()
+        }
+        dashboard.companion(companion.state)
+        dashboard.sharing(ProjectionService.active)
         model.observer = { state ->
             start.isEnabled =
                 !state.busy && state.selected.isNotEmpty() && !ProjectionService.active
@@ -197,22 +187,10 @@ class CastActivity : Activity() {
                 else if (state.busy) R.string.connecting
                 else if (state.receivers.isEmpty()) R.string.no_receivers else R.string.ready
             )
-            if (receiverIds != state.receivers.map { it.id }) {
-                receiverIds = state.receivers.map { it.id }
-                receivers.removeAllViews()
-                val group = RadioGroup(this)
-                for ((index, receiver) in state.receivers.withIndex()) group.addView(
-                    RadioButton(this).apply {
-                        id = index + 1
-                        text = receiver.name
-                        setTextColor(Color.WHITE)
-                        isChecked = receiver.id == state.selected
-                    }
-                )
-                group.setOnCheckedChangeListener { _, id ->
-                    state.receivers.getOrNull(id - 1)?.let { model.select(it.id) }
-                }
-                receivers.addView(group)
+            val key = state.receivers.toString() + state.selected
+            if (receiverKey != key) {
+                receiverKey = key
+                dashboard.receivers(state.receivers, state.selected, model::select)
             }
             state.grant?.let { grant ->
                 val permission = consent
@@ -254,7 +232,7 @@ class CastActivity : Activity() {
                     }
             }
         }
-        if (repository.paired) model.refresh()
+        if (repository.paired) model.refresh() else discoveryModel.refresh()
     }
 
     private fun renderAudioStatus() {
@@ -294,7 +272,12 @@ class CastActivity : Activity() {
         super.onResume()
         getSharedPreferences("cast", MODE_PRIVATE)
             .registerOnSharedPreferenceChangeListener(serviceStatus)
-        if (::discoveryModel.isInitialized) discoveryModel.refresh()
+        resumed = true
+        if (::companion.isInitialized) {
+            companion.refresh(reconnect = !capturePending && !ProjectionService.active)
+            handler.removeCallbacks(companionTick)
+            handler.postDelayed(companionTick, 1500)
+        }
         if (::audioStatus.isInitialized) renderAudioStatus()
         serviceStatus.onSharedPreferenceChanged(
             getSharedPreferences("cast", MODE_PRIVATE),
@@ -304,6 +287,8 @@ class CastActivity : Activity() {
     }
 
     override fun onPause() {
+        resumed = false
+        handler.removeCallbacks(companionTick)
         getSharedPreferences("cast", MODE_PRIVATE)
             .unregisterOnSharedPreferenceChangeListener(serviceStatus)
         super.onPause()
@@ -311,6 +296,9 @@ class CastActivity : Activity() {
 
     override fun onActivityResult(request: Int, result: Int, data: Intent?) {
         super.onActivityResult(request, result, data)
+        if (request == 103 && result == RESULT_OK && data != null && !ProjectionService.active) {
+            companion.join("", "", data.getStringExtra("pairingQr") ?: "")
+        }
         if (request == 101) {
             capturePending = false
             if (result == RESULT_OK && data != null) {
@@ -321,6 +309,8 @@ class CastActivity : Activity() {
     }
 
     override fun onDestroy() {
+        companion.close()
+        handler.removeCallbacks(companionTick)
         discoveryModel.close()
         model.close()
         consent = null

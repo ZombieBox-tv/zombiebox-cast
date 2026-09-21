@@ -46,4 +46,88 @@
         Audio de aplicaciones no disponible. La transmisión de vídeo continúa.
     </string>
     <string name="audio_disabled">Audio de aplicaciones desactivado</string>
+    <string name="qr_scan_hint">Apunta la cámara al QR de emparejamiento de tu TV.</string>
+    <string name="qr_unavailable">
+        Cámara no disponible. Regresa para usar el código de seis dígitos.
+    </string>
+    <string name="cast_title">Zombie Cast</string>
+    <string name="cast_subtitle">Comparte y controla tu pantalla</string>
+    <string name="mode_screen">Pantalla</string>
+    <string name="mode_media">Multimedia</string>
+    <string name="mode_audio">Audio</string>
+    <string name="mode_pending">
+        Este modo aún no está disponible. Compartir pantalla incluye audio opcional en teléfonos
+        compatibles.
+    </string>
+    <string name="this_phone">La pantalla de este teléfono</string>
+    <string name="screen_detail">
+        Comparte tu pantalla con la TV emparejada. Elige qué compartir en el diálogo de Android.
+    </string>
+    <string name="available_devices">Dispositivos disponibles</string>
+    <string name="refresh_short">Actualizar</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_devices">Equipos</string>
+    <string name="nav_remote">Control</string>
+    <string name="nav_activity">Actividad</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="pair_phone">Emparejar con una TV</string>
+    <string name="pair_prompt">Abre Ajustes → Emparejar teléfono en tu TV para comenzar.</string>
+    <string name="pair_instructions">
+        En la TV abre Ajustes → Emparejar teléfono. Escanea su QR o selecciona el gateway e
+        introduce el código de seis dígitos.
+    </string>
+    <string name="scan_qr">Escanear QR de la TV</string>
+    <string name="manual_pair">O empareja con un código</string>
+    <string name="six_digit_code">Código de seis dígitos de la TV</string>
+    <string name="pair_compare">Confirma %1$s en la TV y elige Permitir.</string>
+    <string name="pair_connected">Emparejado con %1$s</string>
+    <string name="pair_denied">Emparejamiento rechazado. Inicia de nuevo desde la TV.</string>
+    <string name="pair_failed">
+        No se pudo contactar o emparejar con la TV. Revisa la red, actualiza o solicita otro código.
+    </string>
+    <string name="forget_phone">Revocar emparejamiento</string>
+    <string name="forget_confirm">
+        ¿Revocar el acceso de este teléfono a la TV seleccionada? Primero debes detener la
+        transmisión.
+    </string>
+    <string name="settings_pairing">
+        Cada TV autoriza este teléfono por separado. Puedes revocar el acceso aquí o en los ajustes
+        de la TV.
+    </string>
+    <string name="quality_adaptive">Calidad de video · Perfil del receptor</string>
+    <string name="orientation_adaptive">Orientación · Sigue al teléfono</string>
+    <string name="remote_title">Control de la TV</string>
+    <string name="remote_detail">
+        Controla Zombiebox mientras la app de TV está abierta. Los diálogos del sistema y de
+        emparejamiento requieren el control de la TV.
+    </string>
+    <string name="remote_online">La TV está lista para el control remoto</string>
+    <string name="remote_offline">Abre Zombiebox en la TV emparejada para usar el control.</string>
+    <string name="remote_no_commands">Sin acciones remotas recientes</string>
+    <string name="command_executed">Última acción completada en la TV</string>
+    <string name="command_waiting">Esperando a la TV</string>
+    <string name="command_unavailable">La última acción no estaba disponible o caducó</string>
+    <string name="remote_up">Arriba</string>
+    <string name="remote_down">Abajo</string>
+    <string name="remote_left">Izquierda</string>
+    <string name="remote_right">Derecha</string>
+    <string name="remote_ok">Aceptar</string>
+    <string name="remote_back">Atrás</string>
+    <string name="remote_rewind">−10 s</string>
+    <string name="remote_forward">+10 s</string>
+    <string name="remote_play">Reproducir / Pausar</string>
+    <string name="remote_stop">Detener</string>
+    <string name="remote_next">Siguiente</string>
+    <string name="remote_quieter">Volumen −</string>
+    <string name="remote_louder">Volumen +</string>
+    <string name="remote_apps">Apps y servicios</string>
+    <string name="provider_youtube">YouTube</string>
+    <string name="provider_plex">Plex</string>
+    <string name="provider_stremio">Stremio</string>
+    <string name="provider_jellyfin">Jellyfin</string>
+    <string name="provider_iptv">IPTV</string>
+    <string name="provider_spotify">Spotify</string>
+    <string name="provider_airplay">AirPlay</string>
+    <string name="device_selected">%1$s  ✓</string>
+    <string name="remote_target">Controlando %1$s</string>
 </resources>

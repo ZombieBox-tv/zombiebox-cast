@@ -10,3 +10,5 @@
 
 - Accepted Cast design: workspace `resources/cast-client-ui-concepto.jpeg` and `docs/design/cast-ui.md` (ADR0029). Keep discovery, trusted pairing, receiver readiness and projection consent distinct. Dedicated 21:9 layouts are outside V1; safe phone insets and scrolling remain required.
 - Public capture baseline remains API21 video/API29 optional audio. Root/OEM/shell backends are planned opt-in capabilities, not a reason to claim pre-21 installation or universal internal-audio capture.
+
+- Cast is phone-first. Native dependencies may be evaluated and adopted when their documented capability/experience benefit outweighs APK/ABI, resource, maintenance and licensing costs. The strict no-.so constraint belongs to Zombie Client, not Cast. No native dependency is required merely to implement QR or remote control.

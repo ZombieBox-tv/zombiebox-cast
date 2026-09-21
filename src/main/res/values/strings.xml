@@ -39,4 +39,88 @@
     <string name="discovery_failed">Discovery unavailable. Enter the gateway URL manually.</string>
     <string name="discovery_empty">No gateways found. Check the same LAN or enter the URL.</string>
     <string name="discovery_choose">Select a gateway below, then pair with its code.</string>
+    <string name="qr_scan_hint">Point the camera at the pairing QR on your TV.</string>
+    <string name="qr_unavailable">
+        Camera unavailable. Go back to pair with a six-digit code.
+    </string>
+    <string name="cast_title">Zombie Cast</string>
+    <string name="cast_subtitle">Mirror, cast and control</string>
+    <string name="mode_screen">Screen</string>
+    <string name="mode_media">Media</string>
+    <string name="mode_audio">Audio</string>
+    <string name="mode_pending">
+        This mode is not available yet. Screen sharing includes optional app audio on supported
+        phones.
+    </string>
+    <string name="this_phone">This phone screen</string>
+    <string name="screen_detail">
+        Share your screen with your paired TV. Choose what to share in the Android prompt.
+    </string>
+    <string name="available_devices">Available devices</string>
+    <string name="refresh_short">Refresh</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_devices">Devices</string>
+    <string name="nav_remote">Remote</string>
+    <string name="nav_activity">Activity</string>
+    <string name="nav_settings">Settings</string>
+    <string name="pair_phone">Pair with a TV</string>
+    <string name="pair_prompt">Open Settings → Pair a phone on your TV to get started.</string>
+    <string name="pair_instructions">
+        On the TV, open Settings → Pair a phone. Scan its QR or select the gateway and enter the
+        six-digit code.
+    </string>
+    <string name="scan_qr">Scan TV QR</string>
+    <string name="manual_pair">Or pair with a code</string>
+    <string name="six_digit_code">Six-digit TV code</string>
+    <string name="pair_compare">Confirm %1$s on the TV, then choose Allow.</string>
+    <string name="pair_connected">Paired with %1$s</string>
+    <string name="pair_denied">Pairing declined. Start again from the TV.</string>
+    <string name="pair_failed">
+        Could not reach or pair with this TV. Check the network, refresh or request a new code.
+    </string>
+    <string name="forget_phone">Revoke pairing</string>
+    <string name="forget_confirm">
+        Revoke this phone’s access to the selected TV? Screen sharing must be stopped first.
+    </string>
+    <string name="settings_pairing">
+        Each TV approves this phone separately. You can revoke access here or in the TV settings.
+    </string>
+    <string name="quality_adaptive">Video quality · Receiver profile</string>
+    <string name="orientation_adaptive">Orientation · Follows your phone</string>
+    <string name="remote_title">TV remote</string>
+    <string name="remote_detail">
+        Control Zombiebox while the TV app is open. Pairing and system dialogs require the TV
+        remote.
+    </string>
+    <string name="remote_online">TV is ready for remote control</string>
+    <string name="remote_offline">Open Zombiebox on the paired TV to use the remote.</string>
+    <string name="remote_no_commands">No recent remote action</string>
+    <string name="command_executed">Last action completed on the TV</string>
+    <string name="command_waiting">Waiting for the TV</string>
+    <string name="command_unavailable">Last action was unavailable or expired</string>
+    <string name="remote_up">Up</string>
+    <string name="remote_down">Down</string>
+    <string name="remote_left">Left</string>
+    <string name="remote_right">Right</string>
+    <string name="remote_ok">OK</string>
+    <string name="remote_back">Back</string>
+    <string name="remote_rewind">−10 s</string>
+    <string name="remote_forward">+10 s</string>
+    <string name="remote_play">Play / Pause</string>
+    <string name="remote_stop">Stop</string>
+    <string name="remote_next">Next</string>
+    <string name="remote_quieter">Volume −</string>
+    <string name="remote_louder">Volume +</string>
+    <string name="remote_apps">
+        Apps &amp; services
+    </string>
+    <string name="provider_youtube">YouTube</string>
+    <string name="provider_plex">Plex</string>
+    <string name="provider_stremio">Stremio</string>
+    <string name="provider_jellyfin">Jellyfin</string>
+    <string name="provider_iptv">IPTV</string>
+    <string name="provider_spotify">Spotify</string>
+    <string name="provider_airplay">AirPlay</string>
+    <string name="device_selected">%1$s  ✓</string>
+    <string name="remote_target">Controlling %1$s</string>
 </resources>

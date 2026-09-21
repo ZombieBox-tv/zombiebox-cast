@@ -66,3 +66,11 @@ or audio permission and cannot approve the target's pairing/privilege dialogs.
 Optional root/OEM capture is planned; dedicated 21:9 layout support is outside V1.
 
 Verification: 8 JVM tests, debug/unsigned-release builds, lint and APK audit pass. Debug APK: 983,167 bytes, minSdk21 and no native libraries. English/Spanish resources are complete for the current screen. Physical/visual behavior remains unverified.
+
+
+## dev.24 increment
+
+Phone-first dark/green dashboard, QR/manual consent, saved target selection/revocation, gateway proof/reconnection and a discrete Remote screen. Cast may adopt assessed native dependencies; this increment adds only Java ZXing. APK versionCode 24.
+Full visual/capture policy, extended Remote, HEVC/4K and other product gates remain open; physical acceptance stays deferred.
+
+Verification: 13 JVM tests, debug/unsigned-release builds and lint pass. Debug APK: 1,310,760 bytes, minSdk21, with no `.so` files currently bundled. Gateway-generated QR decoding, consent states and deferred scan results have host coverage. Camera, focus, A/V and visual/device acceptance remain unverified.

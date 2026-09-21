@@ -7,6 +7,8 @@ import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVid
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.repository.CastRepository
 import io.github.diegog0477.zombiebox.shared.GatewayApi
+import io.github.diegog0477.zombiebox.shared.companion.CompanionTransport
+import io.github.diegog0477.zombiebox.shared.companion.CompanionWire
 import java.net.URI
 import java.util.UUID
 import org.json.JSONObject
@@ -21,6 +23,23 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
             )
         }
 
+    private fun request(method: String, path: String, body: JSONObject? = null): JSONObject {
+        if (!prefs.getBoolean("companion", false)) return api.request(method, path, body)
+        val scoped = CompanionTransport(api.base, api.device, api.token)
+        return try {
+            scoped.request(method, path.replace("/v1/cast", "/v1/companion/cast"), body)
+        } finally {
+            scoped.close()
+        }
+    }
+
+    fun reload() =
+        api.configure(
+            prefs.getString("gateway", "")!!,
+            prefs.getString("device", "")!!,
+            prefs.getString("token", "")!!,
+        )
+
     val address
         get() = api.base
 
@@ -28,11 +47,11 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
         get() = api.token.isNotEmpty()
 
     fun renew(id: String) {
-        api.request("PUT", "/v1/cast/$id")
+        request("PUT", "/v1/cast/$id")
     }
 
     fun ready(id: String) {
-        api.request("POST", "/v1/cast/$id/ready")
+        request("POST", "/v1/cast/$id/ready")
     }
 
     fun close() = api.close()
@@ -59,7 +78,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
                     "POST",
                     "/v1/devices/register",
                     JSONObject()
-                        .put("clientVersion", "cast-0.1.0-dev.12")
+                        .put("clientVersion", "cast-0.1.0-dev.24")
                         .put("protocolVersion", 1)
                         .put("installationId", id)
                         .put("pairingCode", code)
@@ -78,6 +97,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
         api.configure(base, result.getString("deviceId"), result.getString("deviceToken"))
         prefs
             .edit()
+            .putBoolean("companion", false)
             .putString("gateway", api.base)
             .putString("device", api.device)
             .putString("token", api.token)
@@ -85,6 +105,18 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
     }
 
     override fun receivers(): List<Receiver> {
+        if (prefs.getBoolean("companion", false)) {
+            val scoped = CompanionTransport(api.base, api.device, api.token)
+            val status =
+                try {
+                    CompanionWire.status(scoped)
+                } finally {
+                    scoped.close()
+                }
+            return if (status.castAvailable)
+                listOf(Receiver(status.grant.targetId, status.grant.targetName))
+            else emptyList()
+        }
         val result = api.request("GET", "/v1/cast/receivers")
         check(result.optBoolean("relayAvailable"))
         val items = result.getJSONArray("receivers")
@@ -101,7 +133,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
 
     override fun create(receiver: String): CastGrant {
         val result =
-            api.request(
+            request(
                 "POST",
                 "/v1/cast",
                 JSONObject().put("receiverId", receiver).put("replaceExisting", true),
@@ -124,6 +156,6 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
     }
 
     override fun stop(id: String) {
-        api.request("DELETE", "/v1/cast/$id")
+        request("DELETE", "/v1/cast/$id")
     }
 }
