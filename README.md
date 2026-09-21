@@ -48,3 +48,7 @@ encoder recovery and physical evidence remain open.
 Dev.13: Updates the protocol dependency only. Sender capture/rotation/audio behavior and APK version are unchanged.
 
 Dev.16: One-display capture rotation and finite encoder/RTSP recovery, isolated resize callbacks, sample-based audio feedback and video-only fallback. Cast versionCode 7.
+
+## License
+
+First-party code: [GPL-3.0-only](LICENSE). See [NOTICE](NOTICE) for third-party scope.

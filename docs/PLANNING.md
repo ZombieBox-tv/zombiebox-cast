@@ -33,3 +33,9 @@ No product milestone or physical/account gate closes with this checkpoint.
 
 One-display capture rotation and finite encoder/RTSP recovery, isolated resize callbacks, sample-based audio feedback and video-only fallback. Cast versionCode 7.
 Product exit gates and physical/account acceptance remain open.
+
+## dev.17 increment
+
+Adds GPL notices to the APK (versionCode 8) and updates the protocol pin. Capture behavior is unchanged from dev.16.
+
+No product milestone or physical gate is closed.

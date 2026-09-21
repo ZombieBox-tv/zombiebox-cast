@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<network-security-config>
+    <!-- The paired gateway has a user-configured LAN address, not a fixed domain.
+         HTTPS retains platform CA and hostname validation. Never trust all certificates. -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
