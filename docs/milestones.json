@@ -10,7 +10,8 @@
     "Dev.13: Updates the protocol dependency only. Sender capture/rotation/audio behavior and APK version are unchanged. Product exit gates remain open.",
     "Dev.16: One-display capture rotation and finite encoder/RTSP recovery, isolated resize callbacks, sample-based audio feedback and video-only fallback. Cast versionCode 7. No product milestone closes.",
     "Dev.17: GPL-3.0-only licensing, navigation/Hero/guide/receiver and scoped distribution increment. No physical milestone is closed.",
-    "Dev.19: Updates the additive protocol dependency only; sender code and APK version remain unchanged. Product exit gates remain open."
+    "Dev.19: Updates the additive protocol dependency only; sender code and APK version remain unchanged. Product exit gates remain open.",
+    "Dev.20: Consumes additive dev.20 protocol; sender implementation and APK version remain unchanged. Product and physical exit gates remain open."
   ],
   "milestones": [
     {
@@ -28,5 +29,5 @@
       "remoteId": null
     }
   ],
-  "developmentCheckpoint": "v0.1.0-dev.19"
+  "developmentCheckpoint": "v0.1.0-dev.20"
 }
