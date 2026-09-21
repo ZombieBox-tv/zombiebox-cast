@@ -33,3 +33,7 @@ The central workspace owns product-wide ADRs, the original specification, the UI
 reference, M0–M11 exit gates and the complete development/validation gap audit.
 Physical devices over USB/ADB are the default; automated checks do not establish
 legacy runtime or end-to-end account/media compatibility.
+
+Dev.11 updates the pinned shared protocol/transport for the playback request timeout.
+The sender's capture/rotation/audio behavior is unchanged; no new Cast runtime
+compatibility is claimed by this dependency checkpoint.
