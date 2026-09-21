@@ -28,3 +28,8 @@ Consumes receiver video limits for resolution/fps/bitrate; aligned aspect-ratio 
 
 Updates the protocol dependency only. Sender capture/rotation/audio behavior and APK version are unchanged.
 No product milestone or physical/account gate closes with this checkpoint.
+
+## dev.16 increment
+
+One-display capture rotation and finite encoder/RTSP recovery, isolated resize callbacks, sample-based audio feedback and video-only fallback. Cast versionCode 7.
+Product exit gates and physical/account acceptance remain open.

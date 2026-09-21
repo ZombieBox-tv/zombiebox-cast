@@ -60,7 +60,7 @@ class Api29PlaybackAudio : PlaybackAudio {
         }
     }
 
-    override fun start(publisher: RtspPublisher, onFailure: () -> Unit) {
+    override fun start(publisher: RtspPublisher, onFailure: () -> Unit, onState: (String) -> Unit) {
         running = true
         worker =
             Thread(
@@ -74,6 +74,9 @@ class Api29PlaybackAudio : PlaybackAudio {
                             val info = MediaCodec.BufferInfo()
                             var samples = 0L
                             val origin = System.nanoTime() / 1000
+                            var lastAudible = SystemClock.elapsedRealtime()
+                            var previousState = ""
+                            var receivedSamples = false
                             while (running) {
                                 val input = encoder.dequeueInputBuffer(1000)
                                 if (input >= 0) {
@@ -85,6 +88,32 @@ class Api29PlaybackAudio : PlaybackAudio {
                                             AudioRecord.READ_NON_BLOCKING,
                                         )
                                     check(count >= 0 && count % 4 == 0)
+                                    if (count > 0) receivedSamples = true
+                                    var audible = false
+                                    for (offset in 0 until count step 2) {
+                                        val sample =
+                                            ((pcm[offset].toInt() and 255) or
+                                                    (pcm[offset + 1].toInt() shl 8))
+                                                .toShort()
+                                                .toInt()
+                                        if (kotlin.math.abs(sample) > 32) {
+                                            audible = true
+                                            break
+                                        }
+                                    }
+                                    val now = SystemClock.elapsedRealtime()
+                                    if (audible) lastAudible = now
+                                    val currentState =
+                                        if (!receivedSamples) "WAITING"
+                                        else if (audible) "CAPTURING"
+                                        else if (now - lastAudible >= 3000) "SILENT"
+                                        else previousState
+                                    if (
+                                        currentState.isNotEmpty() && currentState != previousState
+                                    ) {
+                                        previousState = currentState
+                                        onState(currentState)
+                                    }
                                     val buffer = encoder.getInputBuffer(input)!!
                                     buffer.clear()
                                     if (count > 0) buffer.put(pcm, 0, count)
@@ -150,6 +179,8 @@ class Api29PlaybackAudio : PlaybackAudio {
 
     override fun close() {
         running = false
-        if (worker == null) release()
+        val current = worker
+        if (current == null) release()
+        else if (current !== Thread.currentThread()) current.join(2000)
     }
 }

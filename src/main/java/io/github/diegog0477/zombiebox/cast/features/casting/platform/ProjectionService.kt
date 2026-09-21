@@ -4,9 +4,6 @@ import android.app.*
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.hardware.display.DisplayManager
-import android.media.MediaCodec
-import android.media.MediaCodecInfo
-import android.media.MediaFormat
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.*
@@ -14,12 +11,12 @@ import android.util.Base64
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
-import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtpH264
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
 import io.github.diegog0477.zombiebox.shared.GatewayFailure
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("DEPRECATION")
 class ProjectionService : Service() {
@@ -33,11 +30,13 @@ class ProjectionService : Service() {
 
     private var encoderStarted = false
     private var shareAudio = false
-    @Volatile private var audio: PlaybackAudio? = null
+    @Volatile private var encoder: ProjectionEncoder? = null
+    @Volatile private var captureSize = Pair(1, 1)
+    private var displayListener: DisplayManager.DisplayListener? = null
+    private lateinit var publisherFactory: () -> RtspPublisher
     private val main = Handler(Looper.getMainLooper())
     private val heartbeat = Executors.newSingleThreadScheduledExecutor()
     @Volatile private var running = false
-    @Volatile private var publisher: RtspPublisher? = null
     private var projection: MediaProjection? = null
     private lateinit var repository: GatewayCastRepository
     private var castId = ""
@@ -85,17 +84,19 @@ class ProjectionService : Service() {
                 (getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager)
                     .getMediaProjection(Activity.RESULT_OK, consent)
             projection!!.registerCallback(
-                object : MediaProjection.Callback() {
-                    override fun onStop() {
-                        main.post { stopSelf() }
-                    }
-                },
+                ProjectionCallbacks.create(
+                    Build.VERSION.SDK_INT,
+                    { main.post { stopSelf() } },
+                    { width, height ->
+                        if (width > 0 && height > 0) captureSize = Pair(width, height)
+                    },
+                ),
                 main,
             )
             running = true
             active = true
             prefs.edit().putString("status", "BUFFERING").apply()
-            publisher =
+            publisherFactory = {
                 RtspPublisher(
                     intent.getStringExtra("host")!!,
                     intent.getIntExtra("port", 8554),
@@ -109,6 +110,24 @@ class ProjectionService : Service() {
                             Base64.NO_WRAP,
                         ),
                 )
+            }
+            updateDisplaySize()
+            if (Build.VERSION.SDK_INT < 34) {
+                displayListener =
+                    object : DisplayManager.DisplayListener {
+                        override fun onDisplayAdded(id: Int) {}
+
+                        override fun onDisplayRemoved(id: Int) {}
+
+                        override fun onDisplayChanged(id: Int) {
+                            if (id == android.view.Display.DEFAULT_DISPLAY) updateDisplaySize()
+                        }
+                    }
+                (getSystemService(DISPLAY_SERVICE) as DisplayManager).registerDisplayListener(
+                    displayListener,
+                    main,
+                )
+            }
             val activeProjection = projection!!
             Thread({ encode(activeProjection) }, "zombie-cast-encoder").start()
             encoderStarted = true
@@ -119,53 +138,45 @@ class ProjectionService : Service() {
         return START_NOT_STICKY
     }
 
+    private fun updateDisplaySize() {
+        val metrics = android.util.DisplayMetrics()
+        (getSystemService(DISPLAY_SERVICE) as DisplayManager)
+            .getDisplay(android.view.Display.DEFAULT_DISPLAY)
+            ?.getRealMetrics(metrics)
+        if (metrics.widthPixels > 0 && metrics.heightPixels > 0)
+            captureSize = Pair(metrics.widthPixels, metrics.heightPixels)
+    }
+
     private fun encode(projection: MediaProjection) {
-        var codec: MediaCodec? = null
-        var display: android.hardware.display.VirtualDisplay? = null
-        var surface: android.view.Surface? = null
         val prefs = getSharedPreferences("cast", MODE_PRIVATE)
         val ready = AtomicBoolean(false)
+        val waitingSince = AtomicLong(SystemClock.elapsedRealtime())
+        var lastLease = SystemClock.elapsedRealtime()
         try {
-            audio = PlaybackAudioFactory.create(Build.VERSION.SDK_INT, shareAudio)
-            audio?.prepare(projection)
-            val metrics = resources.displayMetrics
-            val (width, height) = videoProfile.dimensions(metrics.widthPixels, metrics.heightPixels)
-            val format =
-                MediaFormat.createVideoFormat("video/avc", width, height).apply {
-                    setInteger(
-                        MediaFormat.KEY_COLOR_FORMAT,
-                        MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
-                    )
-                    setInteger(MediaFormat.KEY_BIT_RATE, videoProfile.bitrate)
-                    setInteger(MediaFormat.KEY_FRAME_RATE, videoProfile.fps)
-                    setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-                    setInteger(
-                        MediaFormat.KEY_PROFILE,
-                        MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline,
-                    )
-                }
-            codec = MediaCodec.createEncoderByType("video/avc")
-            codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            surface = codec.createInputSurface()
-            codec.start()
-            display =
-                projection.createVirtualDisplay(
-                    "Zombiebox Cast",
-                    width,
-                    height,
-                    metrics.densityDpi,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    surface,
-                    null,
-                    null,
+            val capture =
+                ProjectionEncoder(
+                    projection,
+                    videoProfile,
+                    resources.displayMetrics.densityDpi,
+                    { captureSize },
+                    publisherFactory,
+                    shareAudio,
+                    { running },
+                    { value ->
+                        ready.set(false)
+                        waitingSince.set(SystemClock.elapsedRealtime())
+                        prefs.edit().putString("status", value).apply()
+                    },
+                    { value -> prefs.edit().putString("audioStatus", value).apply() },
                 )
-            var connected = false
-            val started = SystemClock.elapsedRealtime()
+            encoder = capture
             heartbeat.scheduleWithFixedDelay(
                 {
                     if (running)
                         try {
+                            capture.checkProgress()
                             repository.renew(castId)
+                            lastLease = SystemClock.elapsedRealtime()
                             if (!ready.get()) {
                                 repository.ready(castId)
                                 ready.set(true)
@@ -173,78 +184,29 @@ class ProjectionService : Service() {
                             }
                         } catch (e: Exception) {
                             if (
-                                (e is GatewayFailure && e.status != 503) ||
-                                    SystemClock.elapsedRealtime() - started > 30000
+                                (e is GatewayFailure && e.status in listOf(401, 403, 404, 410)) ||
+                                    SystemClock.elapsedRealtime() - lastLease > 30000 ||
+                                    (!ready.get() &&
+                                        SystemClock.elapsedRealtime() - waitingSince.get() > 30000)
                             )
-                                main.post { stopSelf() }
+                                main.post {
+                                    prefs.edit().putString("status", "FAILED").apply()
+                                    stopSelf()
+                                }
                         }
                 },
                 2,
                 5,
                 TimeUnit.SECONDS,
             )
-            val info = MediaCodec.BufferInfo()
-            while (running) {
-                val index = codec.dequeueOutputBuffer(info, 10000)
-                if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED && !connected) {
-                    val output = codec.outputFormat
-                    fun data(key: String): ByteArray {
-                        val bytes = output.getByteBuffer(key)!!.duplicate()
-                        return ByteArray(bytes.remaining()).also { bytes.get(it) }
-                    }
-                    val parameters =
-                        RtpH264.split(data("csd-0")) +
-                            (if (output.containsKey("csd-1")) RtpH264.split(data("csd-1"))
-                            else emptyList())
-                    val sps = parameters.first { it.isNotEmpty() && it[0].toInt() and 31 == 7 }
-                    val pps = parameters.first { it.isNotEmpty() && it[0].toInt() and 31 == 8 }
-                    publisher!!.connect(sps, pps, audio != null) {
-                        Base64.encodeToString(it, Base64.NO_WRAP)
-                    }
-                    connected = true
-                    audio?.start(publisher!!) { main.post { stopSelf() } }
-                } else if (index >= 0) {
-                    try {
-                        if (
-                            connected &&
-                                info.size > 0 &&
-                                info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
-                        ) {
-                            require(info.size <= 4 * 1024 * 1024)
-                            val buffer = codec.getOutputBuffer(index)!!
-                            buffer.position(info.offset)
-                            buffer.limit(info.offset + info.size)
-                            val bytes = ByteArray(info.size)
-                            buffer.get(bytes)
-                            publisher!!.frame(RtpH264.split(bytes), info.presentationTimeUs)
-                        }
-                    } finally {
-                        codec.releaseOutputBuffer(index, false)
-                    }
-                }
-                if (!connected && SystemClock.elapsedRealtime() - started > 20000)
-                    error("encoder startup timeout")
-            }
+            capture.run()
         } catch (_: Exception) {
             if (running) prefs.edit().putString("status", "FAILED").apply()
         } finally {
             running = false
             active = false
-            publisher?.close()
-            audio?.close()
             heartbeat.shutdownNow()
-            try {
-                display?.release()
-            } catch (_: Exception) {}
-            try {
-                codec?.stop()
-            } catch (_: Exception) {}
-            try {
-                codec?.release()
-            } catch (_: Exception) {}
-            try {
-                surface?.release()
-            } catch (_: Exception) {}
+            encoder?.interrupt()
             try {
                 projection.stop()
             } catch (_: Exception) {}
@@ -304,7 +266,11 @@ class ProjectionService : Service() {
                 .start()
         running = false
         active = false
-        publisher?.close()
+        encoder?.interrupt()
+        displayListener?.let {
+            (getSystemService(DISPLAY_SERVICE) as DisplayManager).unregisterDisplayListener(it)
+        }
+        displayListener = null
         heartbeat.shutdownNow()
         try {
             projection?.stop()

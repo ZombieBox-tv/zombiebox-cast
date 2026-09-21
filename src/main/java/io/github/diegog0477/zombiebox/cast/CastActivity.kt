@@ -22,6 +22,7 @@ class CastActivity : Activity() {
     private lateinit var model: CastViewModel
     private lateinit var receivers: LinearLayout
     private lateinit var status: TextView
+    private lateinit var audioStatus: TextView
     private lateinit var start: Button
     private var consent: Intent? = null
     private lateinit var audio: CheckBox
@@ -29,11 +30,13 @@ class CastActivity : Activity() {
     private var capturePending = false
     private val serviceStatus =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { preferences, key ->
+            if (key == "audioStatus" && ::audioStatus.isInitialized) renderAudioStatus()
             if (key == "status" && ::status.isInitialized) {
                 status.setText(
                     when (preferences.getString("status", "")) {
                         "SHARING" -> R.string.sharing
                         "BUFFERING" -> R.string.buffering
+                        "RECOVERING" -> R.string.recovering
                         "FAILED" -> R.string.failed
                         else -> R.string.stopped
                     }
@@ -114,6 +117,8 @@ class CastActivity : Activity() {
         status = label(R.string.ready)
         label(R.string.consent)
         label(R.string.audio_detail)
+        audioStatus = label(R.string.audio_waiting)
+        renderAudioStatus()
         audio =
             CheckBox(this).apply {
                 setText(R.string.share_audio)
@@ -222,6 +227,18 @@ class CastActivity : Activity() {
         if (repository.paired) model.refresh()
     }
 
+    private fun renderAudioStatus() {
+        audioStatus.setText(
+            when (getSharedPreferences("cast", MODE_PRIVATE).getString("audioStatus", "DISABLED")) {
+                "CAPTURING" -> R.string.audio_capturing
+                "SILENT" -> R.string.audio_silent
+                "UNAVAILABLE" -> R.string.audio_unavailable
+                "WAITING" -> R.string.audio_waiting
+                else -> R.string.audio_disabled
+            }
+        )
+    }
+
     private fun captureConsent() {
         startActivityForResult(
             (getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager)
@@ -247,6 +264,11 @@ class CastActivity : Activity() {
         super.onResume()
         getSharedPreferences("cast", MODE_PRIVATE)
             .registerOnSharedPreferenceChangeListener(serviceStatus)
+        if (::audioStatus.isInitialized) renderAudioStatus()
+        serviceStatus.onSharedPreferenceChanged(
+            getSharedPreferences("cast", MODE_PRIVATE),
+            "status",
+        )
         if (::model.isInitialized && repository.paired && !capturePending) model.refresh()
     }
 

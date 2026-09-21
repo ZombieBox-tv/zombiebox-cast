@@ -6,7 +6,7 @@ import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublis
 interface PlaybackAudio {
     fun prepare(projection: MediaProjection)
 
-    fun start(publisher: RtspPublisher, onFailure: () -> Unit)
+    fun start(publisher: RtspPublisher, onFailure: () -> Unit, onState: (String) -> Unit)
 
     fun close()
 }
@@ -21,6 +21,8 @@ object PlaybackAudioFactory {
                 .getDeclaredConstructor()
                 .newInstance() as PlaybackAudio
         } catch (_: ReflectiveOperationException) {
+            null
+        } catch (_: LinkageError) {
             null
         }
     }

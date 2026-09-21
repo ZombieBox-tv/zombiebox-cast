@@ -26,4 +26,12 @@
     </string>
     <string name="share_audio">Share app audio</string>
     <string name="channel">Screen sharing</string>
+    <string name="recovering">Reconnecting screen sharing…</string>
+    <string name="audio_waiting">App audio: waiting for samples</string>
+    <string name="audio_capturing">App audio: receiving sound</string>
+    <string name="audio_silent">
+        App audio: silence. The app may be silent or may not allow capture.
+    </string>
+    <string name="audio_unavailable">App audio unavailable. Video sharing continues.</string>
+    <string name="audio_disabled">App audio is off</string>
 </resources>

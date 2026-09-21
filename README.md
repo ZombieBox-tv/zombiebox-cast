@@ -19,8 +19,9 @@ protocol checkout after its remote is configured. JDK21 and SDK35 are required.
 `features/casting` separates domain contracts, data, ViewModel, platform capture
 and RTSP/RTP transport. MediaProjection owns video capture; API29 playback audio
 is isolated and subject to platform/content permission. Receiver-aware profiles,
-rotation/recovery and actual A/V/latency evidence remain open. Never claim all
-applications permit audio capture or mirroring.
+rotation reconfiguration and bounded encoder recovery are implemented. Actual
+A/V/latency evidence remains open. Never claim all applications permit audio
+capture or mirroring.
 
 Output: `build/outputs/apk/debug/cast-debug.apk`.
 
@@ -45,3 +46,5 @@ uses a conservative candidate; rotation reconfiguration, audio eligibility feedb
 encoder recovery and physical evidence remain open.
 
 Dev.13: Updates the protocol dependency only. Sender capture/rotation/audio behavior and APK version are unchanged.
+
+Dev.16: One-display capture rotation and finite encoder/RTSP recovery, isolated resize callbacks, sample-based audio feedback and video-only fallback. Cast versionCode 7.
