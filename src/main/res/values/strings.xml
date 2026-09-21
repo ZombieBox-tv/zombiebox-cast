@@ -34,4 +34,9 @@
     </string>
     <string name="audio_unavailable">App audio unavailable. Video sharing continues.</string>
     <string name="audio_disabled">App audio is off</string>
+    <string name="discover_gateways">Find gateways on this network</string>
+    <string name="discovery_searching">Searching nearby gateways…</string>
+    <string name="discovery_failed">Discovery unavailable. Enter the gateway URL manually.</string>
+    <string name="discovery_empty">No gateways found. Check the same LAN or enter the URL.</string>
+    <string name="discovery_choose">Select a gateway below, then pair with its code.</string>
 </resources>

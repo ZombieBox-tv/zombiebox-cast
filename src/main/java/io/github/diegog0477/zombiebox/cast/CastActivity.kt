@@ -12,6 +12,9 @@ import android.widget.*
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
 import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CastViewModel
+import io.github.diegog0477.zombiebox.cast.features.discovery.presentation.ui.DiscoveryPanel
+import io.github.diegog0477.zombiebox.cast.features.discovery.presentation.viewmodel.DiscoveryViewModel
+import io.github.diegog0477.zombiebox.shared.GatewayDiscovery
 import java.util.concurrent.Executors
 
 @Suppress("DEPRECATION")
@@ -20,6 +23,7 @@ class CastActivity : Activity() {
     private val handler = Handler()
     private lateinit var repository: GatewayCastRepository
     private lateinit var model: CastViewModel
+    private lateinit var discoveryModel: DiscoveryViewModel
     private lateinit var receivers: LinearLayout
     private lateinit var status: TextView
     private lateinit var audioStatus: TextView
@@ -60,10 +64,17 @@ class CastActivity : Activity() {
                 { work -> background.execute { work() } },
                 { done -> ui.post { done() } },
             )
+        discoveryModel =
+            DiscoveryViewModel(
+                GatewayDiscovery()::scan,
+                { work -> background.execute { work() } },
+                { work -> ui.post { work() } },
+            )
         val root =
             LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(32, 40, 32, 24)
+                val spacing = (20 * resources.displayMetrics.density).toInt()
+                setPadding(spacing, spacing, spacing, spacing)
                 setBackgroundColor(Color.rgb(10, 15, 16))
             }
         fun label(id: Int) =
@@ -94,6 +105,9 @@ class CastActivity : Activity() {
                 setSingleLine(true)
             }
         root.addView(address)
+        root.addView(
+            DiscoveryPanel(this, discoveryModel) { candidate -> address.setText(candidate) }
+        )
         root.addView(code)
         root.addView(
             Button(this).apply {
@@ -157,7 +171,23 @@ class CastActivity : Activity() {
                 }
             }
         )
-        setContentView(ScrollView(this).apply { addView(root) })
+        setContentView(
+            ScrollView(this).apply {
+                isFillViewport = true
+                setBackgroundColor(Color.rgb(10, 15, 16))
+                setOnApplyWindowInsetsListener { view, insets ->
+                    view.setPadding(
+                        insets.systemWindowInsetLeft,
+                        insets.systemWindowInsetTop,
+                        insets.systemWindowInsetRight,
+                        insets.systemWindowInsetBottom,
+                    )
+                    insets
+                }
+                addView(root)
+            }
+        )
+        discoveryModel.refresh()
         model.observer = { state ->
             start.isEnabled =
                 !state.busy && state.selected.isNotEmpty() && !ProjectionService.active
@@ -264,6 +294,7 @@ class CastActivity : Activity() {
         super.onResume()
         getSharedPreferences("cast", MODE_PRIVATE)
             .registerOnSharedPreferenceChangeListener(serviceStatus)
+        if (::discoveryModel.isInitialized) discoveryModel.refresh()
         if (::audioStatus.isInitialized) renderAudioStatus()
         serviceStatus.onSharedPreferenceChanged(
             getSharedPreferences("cast", MODE_PRIVATE),
@@ -290,6 +321,7 @@ class CastActivity : Activity() {
     }
 
     override fun onDestroy() {
+        discoveryModel.close()
         model.close()
         consent = null
         executor.shutdown()

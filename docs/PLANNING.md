@@ -53,3 +53,16 @@ Requests consented receiver replacement; the gateway retains the previous receiv
 No product or physical acceptance gate closes.
 
 Verification: 6 JVM tests, debug/release builds and lint pass. Physical capture/audio/reception remains unverified.
+
+## dev.23 increment
+
+LAN discovery, selectable gateway candidates and system-bar/viewport correction; APK versionCode 23. QR and full redesign remain planned.
+Product exit gates and deferred physical acceptance remain open.
+
+Accepted next scope (ADR0029 in the workspace): the new Cast reference composition,
+target-approved QR pairing and revocable trust, and an independent companion Remote
+screen with D-pad/media/provider controls. Remote control does not request projection
+or audio permission and cannot approve the target's pairing/privilege dialogs.
+Optional root/OEM capture is planned; dedicated 21:9 layout support is outside V1.
+
+Verification: 8 JVM tests, debug/unsigned-release builds, lint and APK audit pass. Debug APK: 983,167 bytes, minSdk21 and no native libraries. English/Spanish resources are complete for the current screen. Physical/visual behavior remains unverified.

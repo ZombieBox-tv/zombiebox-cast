@@ -63,3 +63,8 @@ Dev.21: Consumes the additive shared dev.21 protocol/transport. Sender code and 
 
 Requests consented receiver replacement; the gateway retains the previous receiver until Cast readiness. APK versionCode 22; encoder/capture implementation unchanged.
 No product or physical acceptance gate closes.
+
+## dev.23 increment
+
+Automatic gateway discovery, refresh/selection and viewport/system-bar correction. Full visual redesign and QR trust remain planned.
+No product or physical acceptance gate closes.

@@ -1,0 +1,49 @@
+<resources>
+    <string name="discover_gateways">Buscar gateways en esta red</string>
+    <string name="discovery_searching">Buscando gateways cercanos…</string>
+    <string name="discovery_failed">
+        Descubrimiento no disponible. Introduce la URL manualmente.
+    </string>
+    <string name="discovery_empty">Sin gateways. Comprueba la red local o introduce la URL.</string>
+    <string name="discovery_choose">Selecciona un gateway y empareja con su código.</string>
+    <string name="app_name">Zombiebox Cast</string>
+    <string name="tagline">Tu pantalla. Una vida más grande.</string>
+    <string name="gateway">Dirección del gateway</string>
+    <string name="code">Código de emparejamiento</string>
+    <string name="connect">Conectar</string>
+    <string name="receivers">Selecciona un receptor</string>
+    <string name="refresh">Actualizar receptores</string>
+    <string name="start">Compartir pantalla</string>
+    <string name="stop">Dejar de compartir</string>
+    <string name="ready">Listo para compartir</string>
+    <string name="connecting">Conectando…</string>
+    <string name="sharing">Compartiendo tu pantalla</string>
+    <string name="buffering">Conectando con tu TV…</string>
+    <string name="stopped">Se detuvo la transmisión de pantalla</string>
+    <string name="failed">
+        No se pudo iniciar la transmisión. Comprueba el gateway y el receptor.
+    </string>
+    <string name="no_receivers">
+        Activa la recepción de pantalla en los ajustes del Client de tu TV y mantenlo abierto.
+    </string>
+    <string name="consent">
+        Android te preguntará qué compartir. Puedes detenerlo desde la notificación.
+    </string>
+    <string name="audio_detail">
+        El audio de aplicaciones requiere Android 10 o posterior y permiso de audio. Cada aplicación
+        decide si permite compartir su audio. No se captura el micrófono.
+    </string>
+    <string name="share_audio">Compartir audio de aplicaciones</string>
+    <string name="channel">Transmisión de pantalla</string>
+    <string name="recovering">Reconectando la transmisión de pantalla…</string>
+    <string name="audio_waiting">Audio de aplicaciones: esperando muestras</string>
+    <string name="audio_capturing">Audio de aplicaciones: recibiendo sonido</string>
+    <string name="audio_silent">
+        Audio de aplicaciones: silencio. La aplicación puede estar en silencio o no permitir la
+        captura.
+    </string>
+    <string name="audio_unavailable">
+        Audio de aplicaciones no disponible. La transmisión de vídeo continúa.
+    </string>
+    <string name="audio_disabled">Audio de aplicaciones desactivado</string>
+</resources>
