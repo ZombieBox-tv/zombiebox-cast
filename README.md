@@ -52,3 +52,5 @@ Dev.16: One-display capture rotation and finite encoder/RTSP recovery, isolated 
 ## License
 
 First-party code: [GPL-3.0-only](LICENSE). See [NOTICE](NOTICE) for third-party scope.
+
+Dev.19: Updates the additive protocol dependency only; sender code and APK version remain unchanged.
