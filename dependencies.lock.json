@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "dependencies": {
+    "zombiebox-protocol": {
+      "environment": "ZOMBIE_PROTOCOL_DIR",
+      "commit": "422abbf61a92c2313219f29a0d73e6b0561376ba",
+      "remote": null
+    }
+  }
+}

@@ -1,11 +1,35 @@
-# Zombiebox Cast
+# zombiebox-cast
 
-Separate API 21+ APK: `io.github.diegog0477.zombiebox.cast`. It shares only the Android connection library with the legacy client. Build from the repository root:
+Independent API21+ MediaProjection sender APK.
+
+This is an independent repository in the Zombie Box workspace. Remotes and hosted
+releases are not configured yet; local commits/tags and dependency pins are real.
+
+Application ID: `io.github.diegog0477.zombiebox.cast`; minSdk21.
 
 ```sh
-make cast-build cast-test
+make deps-check  # ../zombiebox-protocol or ZOMBIE_PROTOCOL_DIR
+make build test
 ```
 
-APK: `build/outputs/apk/debug/cast-debug.apk`. Pair to the gateway, select an online client that has enabled receiving, and approve Android's screen-capture prompt. A foreground service owns MediaProjection and MediaCodec; RTSP/TCP publishes H.264 to MediaMTX. Android 10+ can optionally capture permitted application audio as AAC. No microphone input is selected. Older Android sends video only.
+Uses its own Gradle wrapper/settings and the shared library from the pinned protocol
+repository. It does not depend on Client source. `make deps` can restore the locked
+protocol checkout after its remote is configured. JDK21 and SDK35 are required.
 
-The sender renews a short gateway lease. Receiver Stop, notification Stop, consent revocation, startup failure and network loss close publication. Lifecycle and packetization have host tests; actual MediaProjection/audio/encoder/rotation behavior requires a physical sender. See [mirroring setup and limitations](../docs/development/mirroring.md).
+`features/casting` separates domain contracts, data, ViewModel, platform capture
+and RTSP/RTP transport. MediaProjection owns video capture; API29 playback audio
+is isolated and subject to platform/content permission. Receiver-aware profiles,
+rotation/recovery and actual A/V/latency evidence remain open. Never claim all
+applications permit audio capture or mirroring.
+
+Output: `build/outputs/apk/debug/cast-debug.apk`.
+
+## Development rules
+
+Run `make format` and `make format-check`. Formatters are pinned and downloaded
+on first use. See [AGENTS.md](AGENTS.md), [history provenance](docs/history.md),
+[component work](docs/PLANNING.md) and [local milestone registry](docs/milestones.json).
+The central workspace owns product-wide ADRs, the original specification, the UI
+reference, M0–M11 exit gates and the complete development/validation gap audit.
+Physical devices over USB/ADB are the default; automated checks do not establish
+legacy runtime or end-to-end account/media compatibility.
