@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Zombiebox Cast</string>
+    <string name="tagline">Your screen. A bigger life.</string>
+    <string name="gateway">Gateway address</string>
+    <string name="code">Pairing code</string>
+    <string name="connect">Connect</string>
+    <string name="receivers">Choose a receiver</string>
+    <string name="refresh">Refresh receivers</string>
+    <string name="start">Share screen</string>
+    <string name="stop">Stop sharing</string>
+    <string name="ready">Ready to share</string>
+    <string name="connecting">Connecting…</string>
+    <string name="sharing">Sharing your screen</string>
+    <string name="buffering">Connecting to your TV…</string>
+    <string name="stopped">Screen sharing stopped</string>
+    <string name="failed">Could not start sharing. Check the gateway and receiver.</string>
+    <string name="no_receivers">Enable screen receiving in your TV client settings and keep it open.</string>
+    <string name="consent">Android will ask what to share. You can stop at any time from the notification.</string>
+    <string name="audio_detail">Optional app audio requires Android 10 or newer and audio permission. Apps control whether their audio can be shared. The microphone is not captured.</string>
+    <string name="share_audio">Share app audio</string>
+    <string name="channel">Screen sharing</string>
+</resources>

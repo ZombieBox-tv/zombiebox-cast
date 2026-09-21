@@ -1,8 +1,11 @@
-# Android Mirror / AirCast
+# Zombiebox Cast
 
-Reserved future API 21+ sender APK: `io.github.diegog0477.zombiebox.cast`.
-The client APK uses `io.github.diegog0477.zombiebox.client`.
+Separate API 21+ APK: `io.github.diegog0477.zombiebox.cast`. It shares only the Android connection library with the legacy client. Build from the repository root:
 
-Per [ADR 0018](../docs/adr/0018-android-application-identities.md), the author selected a separate future sender application, superseding the original single-APK boundary in specification section 29. Both belong to this monorepo. No sender APK/build is implemented yet.
+```sh
+make cast-build cast-test
+```
 
-M7 will own MediaProjection, foreground-service/permission lifecycle and the MediaMTX gateway relay. Internal audio depends on API, permissions and content. iOS AirPlay remains a separate UxPlay gateway integration.
+APK: `build/outputs/apk/debug/cast-debug.apk`. Pair to the gateway, select an online client that has enabled receiving, and approve Android's screen-capture prompt. A foreground service owns MediaProjection and MediaCodec; RTSP/TCP publishes H.264 to MediaMTX. Android 10+ can optionally capture permitted application audio as AAC. No microphone input is selected. Older Android sends video only.
+
+The sender renews a short gateway lease. Receiver Stop, notification Stop, consent revocation, startup failure and network loss close publication. Lifecycle and packetization have host tests; actual MediaProjection/audio/encoder/rotation behavior requires a physical sender. See [mirroring setup and limitations](../docs/development/mirroring.md).
