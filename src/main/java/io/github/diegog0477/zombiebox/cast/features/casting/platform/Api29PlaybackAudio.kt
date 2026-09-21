@@ -1,9 +1,10 @@
-package io.github.diegog0477.zombiebox.cast
+package io.github.diegog0477.zombiebox.cast.features.casting.platform
 
 import android.annotation.SuppressLint
 import android.media.*
 import android.media.projection.MediaProjection
 import android.os.SystemClock
+import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
 
 /** Android playback capture only. Never selects a microphone input. */
 @SuppressLint("NewApi", "MissingPermission")

@@ -1,4 +1,4 @@
-package io.github.diegog0477.zombiebox.cast
+package io.github.diegog0477.zombiebox.cast.features.casting.transport
 
 /** RFC 6184 single-NAL / FU-A packetization. Sequence and timestamp wrap by design. */
 class RtpH264(private val ssrc: Int, initialSequence: Int = 0) {

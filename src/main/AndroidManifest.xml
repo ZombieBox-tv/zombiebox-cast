@@ -17,7 +17,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".ProjectionService"
+            android:name="io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection"
         />

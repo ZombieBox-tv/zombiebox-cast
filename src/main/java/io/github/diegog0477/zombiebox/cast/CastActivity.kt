@@ -9,6 +9,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.InputType
 import android.widget.*
+import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
+import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CastViewModel
 import java.util.concurrent.Executors
 
 @Suppress("DEPRECATION")
@@ -72,7 +75,7 @@ class CastActivity : Activity() {
         val address =
             EditText(this).apply {
                 setHint(R.string.gateway)
-                setText(repository.api.base)
+                setText(repository.address)
                 setTextColor(Color.WHITE)
                 setHintTextColor(Color.LTGRAY)
                 setSingleLine(true)
@@ -212,7 +215,7 @@ class CastActivity : Activity() {
                     }
             }
         }
-        if (repository.api.token.isNotEmpty()) model.refresh()
+        if (repository.paired) model.refresh()
     }
 
     private fun captureConsent() {
@@ -240,8 +243,7 @@ class CastActivity : Activity() {
         super.onResume()
         getSharedPreferences("cast", MODE_PRIVATE)
             .registerOnSharedPreferenceChangeListener(serviceStatus)
-        if (::model.isInitialized && repository.api.token.isNotEmpty() && !capturePending)
-            model.refresh()
+        if (::model.isInitialized && repository.paired && !capturePending) model.refresh()
     }
 
     override fun onPause() {

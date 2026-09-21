@@ -1,14 +1,17 @@
-package io.github.diegog0477.zombiebox.cast
+package io.github.diegog0477.zombiebox.cast.features.casting.data
 
 import android.content.SharedPreferences
 import android.os.Build
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGrant
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.repository.CastRepository
 import io.github.diegog0477.zombiebox.shared.GatewayApi
 import java.net.URI
 import java.util.UUID
 import org.json.JSONObject
 
 class GatewayCastRepository(private val prefs: SharedPreferences) : CastRepository {
-    val api =
+    private val api =
         GatewayApi().apply {
             configure(
                 prefs.getString("gateway", "")!!,
@@ -16,6 +19,22 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
                 prefs.getString("token", "")!!,
             )
         }
+
+    val address
+        get() = api.base
+
+    val paired
+        get() = api.token.isNotEmpty()
+
+    fun renew(id: String) {
+        api.request("PUT", "/v1/cast/$id")
+    }
+
+    fun ready(id: String) {
+        api.request("POST", "/v1/cast/$id/ready")
+    }
+
+    fun close() = api.close()
 
     override fun pair(address: String, code: String) {
         val base = address.trim().trimEnd('/')

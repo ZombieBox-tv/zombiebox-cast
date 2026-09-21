@@ -1,4 +1,4 @@
-package io.github.diegog0477.zombiebox.cast
+package io.github.diegog0477.zombiebox.cast.features.casting.transport
 
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream

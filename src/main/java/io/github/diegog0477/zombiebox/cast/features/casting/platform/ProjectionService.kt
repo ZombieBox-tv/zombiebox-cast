@@ -1,4 +1,4 @@
-package io.github.diegog0477.zombiebox.cast
+package io.github.diegog0477.zombiebox.cast.features.casting.platform
 
 import android.app.*
 import android.content.Intent
@@ -11,6 +11,10 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.*
 import android.util.Base64
+import io.github.diegog0477.zombiebox.cast.R
+import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtpH264
+import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
 import io.github.diegog0477.zombiebox.shared.GatewayFailure
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -153,9 +157,9 @@ class ProjectionService : Service() {
                 {
                     if (running)
                         try {
-                            repository.api.request("PUT", "/v1/cast/$castId")
+                            repository.renew(castId)
                             if (!ready.get()) {
-                                repository.api.request("POST", "/v1/cast/$castId/ready")
+                                repository.ready(castId)
                                 ready.set(true)
                                 prefs.edit().putString("status", "SHARING").apply()
                             }
@@ -239,7 +243,7 @@ class ProjectionService : Service() {
             try {
                 repository.stop(castId)
             } catch (_: Exception) {}
-            repository.api.close()
+            repository.close()
             main.post { stopSelf() }
         }
     }
@@ -285,7 +289,7 @@ class ProjectionService : Service() {
                         try {
                             repository.stop(castId)
                         } catch (_: Exception) {}
-                        repository.api.close()
+                        repository.close()
                     },
                     "zombie-cast-cleanup",
                 )
