@@ -39,3 +39,10 @@ Product exit gates and physical/account acceptance remain open.
 Adds GPL notices to the APK (versionCode 8) and updates the protocol pin. Capture behavior is unchanged from dev.16.
 
 No product milestone or physical gate is closed.
+
+## dev.21 increment
+
+Consumes the additive shared dev.21 protocol/transport. Sender code and APK version remain unchanged.
+No physical, account or product milestone closes.
+
+Verification: 6 JVM tests, debug/release compilation, lint and APK audit pass. The debug APK is 971,753 bytes, minSdk 21 and contains no native libraries. Physical capture/audio/rotation remain unverified.

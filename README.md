@@ -56,3 +56,5 @@ First-party code: [GPL-3.0-only](LICENSE). See [NOTICE](NOTICE) for third-party 
 Dev.19: Updates the additive protocol dependency only; sender code and APK version remain unchanged.
 
 Dev.20: Consumes additive dev.20 protocol; sender implementation and APK version remain unchanged.
+
+Dev.21: Consumes the additive shared dev.21 protocol/transport. Sender code and APK version remain unchanged.
