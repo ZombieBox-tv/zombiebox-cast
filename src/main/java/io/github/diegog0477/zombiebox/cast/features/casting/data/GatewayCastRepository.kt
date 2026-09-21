@@ -100,7 +100,12 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
     }
 
     override fun create(receiver: String): CastGrant {
-        val result = api.request("POST", "/v1/cast", JSONObject().put("receiverId", receiver))
+        val result =
+            api.request(
+                "POST",
+                "/v1/cast",
+                JSONObject().put("receiverId", receiver).put("replaceExisting", true),
+            )
         val video = result.optJSONObject("video")
         return CastGrant(
             result.getString("castId"),

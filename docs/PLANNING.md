@@ -46,3 +46,10 @@ Consumes the additive shared dev.21 protocol/transport. Sender code and APK vers
 No physical, account or product milestone closes.
 
 Verification: 6 JVM tests, debug/release compilation, lint and APK audit pass. The debug APK is 971,753 bytes, minSdk 21 and contains no native libraries. Physical capture/audio/rotation remain unverified.
+
+## dev.22 increment
+
+Requests consented receiver replacement; the gateway retains the previous receiver until Cast readiness. APK versionCode 22; encoder/capture implementation unchanged.
+No product or physical acceptance gate closes.
+
+Verification: 6 JVM tests, debug/release builds and lint pass. Physical capture/audio/reception remains unverified.

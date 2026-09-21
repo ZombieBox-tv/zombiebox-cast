@@ -58,3 +58,8 @@ Dev.19: Updates the additive protocol dependency only; sender code and APK versi
 Dev.20: Consumes additive dev.20 protocol; sender implementation and APK version remain unchanged.
 
 Dev.21: Consumes the additive shared dev.21 protocol/transport. Sender code and APK version remain unchanged.
+
+## dev.22 increment
+
+Requests consented receiver replacement; the gateway retains the previous receiver until Cast readiness. APK versionCode 22; encoder/capture implementation unchanged.
+No product or physical acceptance gate closes.
