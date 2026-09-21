@@ -3,7 +3,7 @@
   "dependencies": {
     "zombiebox-protocol": {
       "environment": "ZOMBIE_PROTOCOL_DIR",
-      "commit": "c3e8d48c689a250f82e3db1ca27928fd2c171e83",
+      "commit": "8466e141ed6cfe08121ad92b7cd374c42da205d3",
       "remote": null
     }
   }

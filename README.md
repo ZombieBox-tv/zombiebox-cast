@@ -43,3 +43,5 @@ receiver-specific maximum dimensions, fps and bitrate are validated and applied.
 Source aspect ratio is retained with 16-pixel alignment. Unknown receiver support
 uses a conservative candidate; rotation reconfiguration, audio eligibility feedback,
 encoder recovery and physical evidence remain open.
+
+Dev.13: Updates the protocol dependency only. Sender capture/rotation/audio behavior and APK version are unchanged.

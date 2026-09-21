@@ -23,3 +23,8 @@ No product milestone or physical/account gate is completed by this checkpoint.
 ## dev.12 increment
 
 Consumes receiver video limits for resolution/fps/bitrate; aligned aspect-ratio sizing. Rotation/audio recovery and physical evidence remain open.
+
+## dev.13 increment
+
+Updates the protocol dependency only. Sender capture/rotation/audio behavior and APK version are unchanged.
+No product milestone or physical/account gate closes with this checkpoint.
