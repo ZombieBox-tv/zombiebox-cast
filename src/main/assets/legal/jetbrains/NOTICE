@@ -1,0 +1,11 @@
+Kotlin standard library 2.3.0
+Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+
+JetBrains annotations 13.0
+Copyright 2000-2013 JetBrains s.r.o.
+
+These runtime inputs declare the Apache License, Version 2.0.
+The complete license accompanies this notice in LICENSE.
+Published source archives and Maven license declarations are pinned by the
+workspace Android source inventory and accompany review/distribution bundles.
+Source copyright headers are retained in those unmodified archives.
