@@ -3,7 +3,7 @@
 Phone-first API21+ companion, remote and MediaProjection sender APK.
 
 This is an independent repository in the Zombie Box workspace.
-[Source and milestones](https://github.com/DiegoG0477/zombiebox-cast) are hosted on GitHub.
+[Source and milestones](https://github.com/ZombieBox-tv/zombiebox-cast) are hosted on GitHub.
 Development checkpoints are not stable releases or physical compatibility claims.
 
 Application ID: `io.github.diegog0477.zombiebox.cast`; minSdk21.

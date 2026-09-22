@@ -27,7 +27,8 @@
     "Dev.33: Single local audio/video file intake through Android Sharesheet, bounded consented staging and explicit Send; accepted TV media is preserved, ambiguous inputs rejected and failed Stop prevents replacement. VersionCode 33. URL/queue/background transfer and physical acceptance remain open.",
     "Dev.34: Direct QR pairing and network screen selection, icon-based remote with service marks and keyboard, service-owned background file transfer with cancellation notification. APK versionCode 34; URLs/queues/resumable upload and physical acceptance remain open.",
     "Dev.35: Direct public URL queues and Android text sharing, plus bounded native DIAL discovery and confirmed Home launch with manual fallback. No automatic launch or pairing consent through discovery.",
-    "Dev.36: Release version 36 includes DIAL notices and the selected shared Android signing identity; physical acceptance remains deferred."
+    "Dev.36: Release version 36 includes DIAL notices and the selected shared Android signing identity; physical acceptance remains deferred.",
+    "Dev.38: existing repository transferred to ZombieBox-tv with preserved identity/history/releases/milestones. No product completion or physical acceptance is implied."
   ],
   "milestones": [
     {
@@ -36,7 +37,7 @@
       "status": "in_progress",
       "completedAt": null,
       "remoteId": 1,
-      "remoteURL": "https://github.com/DiegoG0477/zombiebox-cast/milestone/1"
+      "remoteURL": "https://github.com/ZombieBox-tv/zombiebox-cast/milestone/1"
     },
     {
       "id": "M11",
@@ -44,9 +45,9 @@
       "status": "planned",
       "completedAt": null,
       "remoteId": 2,
-      "remoteURL": "https://github.com/DiegoG0477/zombiebox-cast/milestone/2"
+      "remoteURL": "https://github.com/ZombieBox-tv/zombiebox-cast/milestone/2"
     }
   ],
-  "developmentCheckpoint": "v0.1.0-dev.36",
-  "remote": "https://github.com/DiegoG0477/zombiebox-cast"
+  "developmentCheckpoint": "v0.1.0-dev.38",
+  "remote": "https://github.com/ZombieBox-tv/zombiebox-cast"
 }

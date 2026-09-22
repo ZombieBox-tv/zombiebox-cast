@@ -3,8 +3,8 @@
   "dependencies": {
     "zombiebox-protocol": {
       "environment": "ZOMBIE_PROTOCOL_DIR",
-      "commit": "00941eb26b6ce84d68189f4daec18ceddbdbba6c",
-      "remote": "https://github.com/DiegoG0477/zombiebox-protocol.git"
+      "commit": "1ea6d5360b670c29573b755a1fca84ae64e3dddb",
+      "remote": "https://github.com/ZombieBox-tv/zombiebox-protocol.git"
     }
   }
 }
