@@ -71,13 +71,14 @@
     <string name="nav_activity">Actividad</string>
     <string name="nav_settings">Ajustes</string>
     <string name="pair_phone">Emparejar con una TV</string>
-    <string name="pair_prompt">Abre Ajustes → Emparejar teléfono en tu TV para comenzar.</string>
+    <string name="pair_prompt">
+        Selecciona una pantalla de tu red o escanea su QR de vinculación.
+    </string>
     <string name="pair_instructions">
-        En la TV abre Ajustes → Emparejar teléfono. Escanea su QR o selecciona el gateway e
-        introduce el código de seis dígitos.
+        Escanea el QR de tu TV para emparejar al instante. Es de un solo uso y caduca en 5 minutos.
     </string>
     <string name="scan_qr">Escanear QR de la TV</string>
-    <string name="manual_pair">O empareja con un código</string>
+    <string name="manual_pair">O selecciona un gateway de la red / escribe su URL</string>
     <string name="six_digit_code">Código de seis dígitos de la TV</string>
     <string name="pair_compare">Confirma %1$s en la TV y elige Permitir.</string>
     <string name="pair_connected">Emparejado con %1$s</string>
@@ -203,9 +204,10 @@
     <string name="media_cancel">Cancelar transferencia / restablecer</string>
     <string name="media_stop">Detener en la TV</string>
     <string name="media_limits">
-        MP4, MKV/WebM, MP3, WAV, FLAC u Ogg; hasta 256 MiB con tamaño conocido. Mantén esta pantalla
-        abierta durante la subida (máximo 5 minutos). El gateway comprueba la compatibilidad antes
-        de entregar la reproducción. Sin captura de pantalla ni micrófono.
+        MP4, MKV/WebM, MP3, WAV, FLAC u Ogg; hasta 256 MiB con tamaño conocido. El envío continúa en
+        segundo plano con notificación para cancelar (límite del gateway: 5 minutos). El gateway
+        comprueba la compatibilidad antes de transferir la reproducción. Sin captura de pantalla ni
+        micrófono.
     </string>
     <string name="media_reading">Comprobando contenido…</string>
     <string name="media_uploading">Subiendo: %1$d%% — preparando reproducción…</string>
@@ -234,4 +236,30 @@
         seleccionar otro.
     </string>
     <string name="media_target">Destino: %1$s</string>
+    <string name="media_transfer_channel">Transferencia multimedia</string>
+    <string name="media_background">
+        Enviando a tu pantalla emparejada. Puedes salir de esta pantalla.
+    </string>
+    <string name="media_notification_denied">
+        Las notificaciones están desactivadas. Abre Media para cancelar o usa las apps activas de
+        Android.
+    </string>
+    <string name="pair_find_screens">Buscar pantallas</string>
+    <string name="pair_select_screen">
+        Elige una pantalla, compara el código de seis dígitos y acepta en la TV.
+    </string>
+    <string name="pair_searching">Buscando pantallas…</string>
+    <string name="pair_no_screens">
+        No hay pantallas disponibles. Abre Zombie Box en tu TV y actualiza.
+    </string>
+    <string name="pair_target_failed">
+        No se pudo conectar. Revisa la dirección del gateway e intenta de nuevo.
+    </string>
+    <string name="remote_keyboard">Escribir en la TV</string>
+    <string name="remote_text_hint">Texto para pegar en el campo seleccionado de la TV</string>
+    <string name="remote_text_send">Pegar en la TV</string>
+    <string name="remote_text_focus">
+        Selecciona un campo de búsqueda o texto en la TV. Se excluyen contraseñas y autorizaciones.
+    </string>
+    <string name="remote_text_ready">Listo para pegar en el campo seleccionado de la TV.</string>
 </resources>

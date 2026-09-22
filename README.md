@@ -156,3 +156,7 @@ Product milestones, physical validation and public distribution remain open.
 ## dev.33 increment
 
 Single local audio/video file intake through Android Sharesheet, bounded consented staging and explicit Send; accepted TV media is preserved, ambiguous inputs rejected and failed Stop prevents replacement. VersionCode 33. URL/queue/background transfer and physical acceptance remain open.
+
+## dev.34 increment
+
+Direct QR pairing and network screen selection, icon-based remote with service marks and keyboard, service-owned background file transfer with cancellation notification. APK versionCode 34; URLs/queues/resumable upload and physical acceptance remain open.

@@ -14,8 +14,26 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
         get() =
             prefs.getBoolean("companion", false) && !prefs.getString("token", "").isNullOrEmpty()
 
-    override fun join(address: String, code: String, qr: String) =
-        CompanionWire.join(address, code, qr, (Build.MANUFACTURER + " " + Build.MODEL).take(80))
+    private fun clientKey(): String {
+        val current = prefs.getString("pairingClientKey", "").orEmpty()
+        if (current.matches(Regex("[0-9a-f]{64}"))) return current
+        val bytes = ByteArray(32).apply { java.security.SecureRandom().nextBytes(this) }
+        val key = bytes.joinToString("") { "%02x".format(it.toInt() and 255) }
+        check(prefs.edit().putString("pairingClientKey", key).commit())
+        return key
+    }
+
+    override fun nearbyTargets(address: String) = CompanionWire.targets(address)
+
+    override fun join(address: String, targetId: String, qr: String) =
+        CompanionWire.join(
+            address,
+            "",
+            qr,
+            (Build.MANUFACTURER + " " + Build.MODEL).take(80),
+            targetId = if (qr.isEmpty()) targetId else "",
+            clientKey = clientKey(),
+        )
 
     override fun await(attempt: PairingAttempt) = CompanionWire.await(attempt)
 
@@ -103,6 +121,15 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
         val api = transport()
         try {
             CompanionWire.send(api, action, provider)
+        } finally {
+            api.close()
+        }
+    }
+
+    override fun sendText(text: String, inputId: String) {
+        val api = transport()
+        try {
+            CompanionWire.sendText(api, text, inputId)
         } finally {
             api.close()
         }

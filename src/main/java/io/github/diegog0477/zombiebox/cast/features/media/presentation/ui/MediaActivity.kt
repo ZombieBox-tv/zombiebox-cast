@@ -1,9 +1,14 @@
 package io.github.diegog0477.zombiebox.cast.features.media.presentation.ui
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ComponentName
 import android.content.Intent
+import android.content.ServiceConnection
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.os.Handler
+import android.os.IBinder
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -13,24 +18,47 @@ import android.widget.Toast
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.core.ui.PhoneWidgets
 import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
-import io.github.diegog0477.zombiebox.cast.features.media.data.GatewayMediaRepository
+import io.github.diegog0477.zombiebox.cast.features.media.platform.MediaTransferService
 import io.github.diegog0477.zombiebox.cast.features.media.platform.SharedDocument
+import io.github.diegog0477.zombiebox.cast.features.media.platform.TransferApi26
+import io.github.diegog0477.zombiebox.cast.features.media.platform.TransferApi33
 import io.github.diegog0477.zombiebox.cast.features.media.presentation.viewmodel.MediaViewModel
-import java.util.concurrent.Executors
 
 /** Platform document consent and composition; wire mapping stays in the repository. */
 @Suppress("DEPRECATION")
 class MediaActivity : Activity() {
-    private val executor = Executors.newSingleThreadExecutor()
-    private val handler = Handler()
     private lateinit var model: MediaViewModel
+    private var service: MediaTransferService? = null
+    private var bound = false
+    private var shared: String? = null
+    private lateinit var renderState: (MediaViewModel.State) -> Unit
+    private lateinit var target: android.widget.TextView
+    private val connection =
+        object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+                val owner = (binder as MediaTransferService.LocalBinder).service
+                service = owner
+                model = owner.model
+                target.text = getString(R.string.media_target, owner.targetName)
+                owner.render = renderState
+                owner.attach(shared)
+                shared = null
+            }
+
+            override fun onServiceDisconnected(name: ComponentName) {
+                service = null
+                finish()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val shared = if (intent.action == Intent.ACTION_SEND) SharedDocument.read(intent) else null
+        val incoming =
+            if (intent.action == Intent.ACTION_SEND) SharedDocument.read(intent) else null
+        shared = if (savedInstanceState == null) incoming else null
         if (
             (intent.action != null && intent.action != Intent.ACTION_SEND) ||
-                (intent.action == Intent.ACTION_SEND && shared == null) ||
+                (intent.action == Intent.ACTION_SEND && incoming == null) ||
                 ProjectionService.active
         ) {
             Toast.makeText(this, R.string.media_share_rejected, Toast.LENGTH_LONG).show()
@@ -46,19 +74,6 @@ class MediaActivity : Activity() {
             finish()
             return
         }
-        val repository =
-            GatewayMediaRepository(
-                applicationContext.contentResolver,
-                prefs.getString("gateway", "").orEmpty(),
-                prefs.getString("device", "").orEmpty(),
-                prefs.getString("token", "").orEmpty(),
-            )
-        model =
-            MediaViewModel(
-                repository,
-                { work -> executor.execute { work() } },
-                { work -> handler.post { work() } },
-            )
         val ui = PhoneWidgets(this)
         val content = ui.column().apply { setPadding(ui.dp(20), ui.dp(16), ui.dp(20), ui.dp(24)) }
         val header = ui.row()
@@ -72,7 +87,7 @@ class MediaActivity : Activity() {
         )
         content.addView(header)
         content.addView(ui.label(R.string.media_description, 16f, ui.muted))
-        content.addView(
+        target =
             ui.label(R.string.media_target, 17f, ui.accent).apply {
                 text =
                     getString(
@@ -81,7 +96,7 @@ class MediaActivity : Activity() {
                             ?: prefs.getString("device", "").orEmpty().take(80),
                     )
             }
-        )
+        content.addView(target)
         content.addView(ui.label(R.string.media_target_confirmation, 15f, ui.muted))
         val tabs = ui.segments()
         for ((index, label) in
@@ -92,7 +107,7 @@ class MediaActivity : Activity() {
                     listOf(R.drawable.ic_screen, R.drawable.ic_media, R.drawable.ic_audio)[index],
                     label == R.string.mode_media,
                 ) {
-                    if (!model.busy && label != R.string.mode_media) {
+                    if (::model.isInitialized && !model.busy && label != R.string.mode_media) {
                         setResult(
                             RESULT_OK,
                             Intent()
@@ -135,8 +150,9 @@ class MediaActivity : Activity() {
         card.addView(progress, LinearLayout.LayoutParams(-1, ui.dp(12)))
         content.addView(card)
         val choose = ui.action(getString(R.string.media_choose)) { chooseDocument() }
-        val send = ui.action(getString(R.string.media_send), true) { model.send() }
-        val stop = ui.action(getString(R.string.media_cancel)) { model.stop() }
+        val send = ui.action(getString(R.string.media_send), true) { startTransfer() }
+        val stop =
+            ui.action(getString(R.string.media_cancel)) { if (::model.isInitialized) model.stop() }
         content.addView(
             choose,
             LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(12) },
@@ -166,7 +182,10 @@ class MediaActivity : Activity() {
                 }
             }
         setContentView(scroll)
-        model.observer = { state ->
+        choose.isEnabled = false
+        send.isEnabled = false
+        stop.isEnabled = false
+        renderState = { state ->
             document.text =
                 state.document?.title?.takeIf { it.isNotBlank() }
                     ?: getString(R.string.media_choose)
@@ -198,7 +217,48 @@ class MediaActivity : Activity() {
                 if (state.phase == "ACCEPTED") R.string.media_stop else R.string.media_cancel
             )
         }
-        model.restore(shared)
+        val binding = Intent(this, MediaTransferService::class.java)
+        shared?.let { grant(binding, it) }
+        bound = bindService(binding, connection, BIND_AUTO_CREATE)
+        if (!bound) finish()
+    }
+
+    private fun grant(command: Intent, locator: String) {
+        val uri = Uri.parse(locator)
+        command.clipData = ClipData.newRawUri("Media", uri)
+        command.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    private fun startTransfer() {
+        if (Build.VERSION.SDK_INT >= 33 && !TransferApi33.allowed(this)) {
+            TransferApi33.request(this)
+        } else startTransferWithPermission()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 134) {
+            if (grantResults.firstOrNull() != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                Toast.makeText(this, R.string.media_notification_denied, Toast.LENGTH_LONG).show()
+            startTransferWithPermission()
+        }
+    }
+
+    private fun startTransferWithPermission() {
+        if (!::model.isInitialized || model.state.phase != "READY") return
+        val locator = model.state.document?.locator ?: return
+        val command = Intent(this, MediaTransferService::class.java).setAction("SEND")
+        grant(command, locator)
+        try {
+            if (Build.VERSION.SDK_INT >= 26) TransferApi26.start(this, command)
+            else startService(command)
+        } catch (_: Exception) {
+            Toast.makeText(this, R.string.media_failed, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun chooseDocument() {
@@ -220,12 +280,13 @@ class MediaActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 201 && resultCode == RESULT_OK)
-            data?.data?.let { model.select(it.toString()) }
+            data?.data?.let { if (::model.isInitialized) model.select(it.toString()) }
     }
 
     override fun onDestroy() {
-        if (::model.isInitialized) model.close()
-        executor.shutdown()
+        if (::renderState.isInitialized && service?.render === renderState) service?.render = null
+        if (bound) unbindService(connection)
+        service = null
         super.onDestroy()
     }
 }

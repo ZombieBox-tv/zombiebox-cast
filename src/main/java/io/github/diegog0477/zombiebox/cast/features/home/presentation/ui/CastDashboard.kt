@@ -27,6 +27,7 @@ class CastDashboard(
     startCapture: () -> Unit,
     stopCapture: () -> Unit,
     send: (String, String) -> Unit,
+    sendText: (String) -> Unit,
     private val selectTrusted: (String) -> Unit,
     forget: () -> Unit,
     preferences: CapturePreferences,
@@ -42,7 +43,7 @@ class CastDashboard(
     private val pages = ui.column()
     private val home = ui.column()
     private val devices = ui.column()
-    private val remote = RemotePanel(context, send)
+    private val remote = RemotePanel(context, send, sendText)
     private val activity = ui.column()
     private val history = HistoryPanel(context, clearHistory)
     private val settings = ui.column()
@@ -286,7 +287,10 @@ class CastDashboard(
             }
         pairingStatus.text = detail
         trustedStatus.text = detail
-        remote.available(target?.remoteOnline == true && !state.busy && !state.failed)
+        remote.available(
+            target?.remoteOnline == true && !state.failed,
+            !target?.textInputId.isNullOrEmpty(),
+        )
         remoteStatus.text =
             if (target?.remoteOnline == true && !state.failed)
                 context.getString(R.string.remote_target, target.grant.targetName)

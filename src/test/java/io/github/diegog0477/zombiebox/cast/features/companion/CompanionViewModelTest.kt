@@ -14,13 +14,17 @@ class CompanionViewModelTest {
         var online = false
         var sent = 0
         var selected = ""
+        var joinPhase = "PENDING"
+        var inputId = ""
 
-        override fun join(address: String, code: String, qr: String) =
+        override fun join(address: String, targetId: String, qr: String) =
             PairingAttempt(
                 address,
-                PairingRequest("grant", "tv", "Phone", "123456", "PENDING"),
+                PairingRequest("grant", "tv", "Phone", "123456", joinPhase),
                 "secret",
             )
+
+        override fun nearbyTargets(address: String) = listOf(PairingTarget("tv", "Living room"))
 
         override fun await(attempt: PairingAttempt) = attempt.request.copy(state = phase)
 
@@ -30,11 +34,21 @@ class CompanionViewModelTest {
         }
 
         override fun status() =
-            CompanionStatus(CompanionGrant("grant", "tv", "TV", "Phone"), online, false, "")
+            CompanionStatus(
+                CompanionGrant("grant", "tv", "TV", "Phone"),
+                online,
+                false,
+                "",
+                inputId,
+            )
 
         override fun reconnect() = status()
 
         override fun send(action: String, provider: String) {
+            sent++
+        }
+
+        override fun sendText(text: String, inputId: String) {
             sent++
         }
 
@@ -47,6 +61,46 @@ class CompanionViewModelTest {
         override fun select(id: String) {
             selected = id
         }
+    }
+
+    @Test
+    fun qrApprovalActivatesImmediatelyWithoutPendingScreen() {
+        val repo =
+            Fake().apply {
+                joinPhase = "APPROVED"
+                phase = "APPROVED"
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("", "", "scanned QR")
+        assertTrue(repo.paired)
+        assertEquals("APPROVED", model.state.phase)
+        assertEquals("", model.state.comparison)
+    }
+
+    @Test
+    fun listingTargetsDoesNotRequestConsentUntilOneIsSelected() {
+        val model = CompanionViewModel(Fake(), { it() }, { it() })
+        model.discoverTargets("http://gateway")
+        assertEquals("SELECT_TARGET", model.state.phase)
+        assertEquals("Living room", model.state.nearby.first().name)
+        assertEquals("", model.state.comparison)
+    }
+
+    @Test
+    fun typingRequiresAnAvailableTargetField() {
+        val repo =
+            Fake().apply {
+                paired = true
+                online = true
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.refresh()
+        model.sendText("Hello")
+        assertEquals(0, repo.sent)
+        repo.inputId = "current-field"
+        model.refresh()
+        model.sendText("Hello")
+        assertEquals(1, repo.sent)
     }
 
     @Test

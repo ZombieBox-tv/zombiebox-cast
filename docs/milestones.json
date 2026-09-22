@@ -24,7 +24,8 @@
     "Dev.30: Native Media file screen, document consent, bounded upload/progress/cancel, accepted-file restoration and Stop. No capture/storage-wide permissions or native dependency added. Foreground-only upload; URL sending remains pending. Product and physical gates remain open.",
     "Dev.31: Pins the additive native-inventory protocol; no Cast runtime or APK version change. Full visual finishing, sender/OEM and broader Media flows remain pending. Product gates remain open.",
     "Dev.32: Screen/Media/Audio share a quiet segmented surface with original icons, a green selected fill and visible D-pad focus. Media has a compact header, file card and real upload progress; disabled actions lose the active fill. No screenshot-match or physical acceptance claim. Product gates remain open.",
-    "Dev.33: Single local audio/video file intake through Android Sharesheet, bounded consented staging and explicit Send; accepted TV media is preserved, ambiguous inputs rejected and failed Stop prevents replacement. VersionCode 33. URL/queue/background transfer and physical acceptance remain open."
+    "Dev.33: Single local audio/video file intake through Android Sharesheet, bounded consented staging and explicit Send; accepted TV media is preserved, ambiguous inputs rejected and failed Stop prevents replacement. VersionCode 33. URL/queue/background transfer and physical acceptance remain open.",
+    "Dev.34: Direct QR pairing and network screen selection, icon-based remote with service marks and keyboard, service-owned background file transfer with cancellation notification. APK versionCode 34; URLs/queues/resumable upload and physical acceptance remain open."
   ],
   "milestones": [
     {
@@ -42,5 +43,5 @@
       "remoteId": null
     }
   ],
-  "developmentCheckpoint": "v0.1.0-dev.32"
+  "developmentCheckpoint": "v0.1.0-dev.34"
 }

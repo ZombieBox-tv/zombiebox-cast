@@ -35,6 +35,38 @@ class MediaViewModelTest {
     }
 
     @Test
+    fun detachingUiDoesNotCancelServiceOwnedWorkAndReattachSeesProgress() {
+        val work = mutableListOf<() -> Unit>()
+        val delivery = mutableListOf<() -> Unit>()
+        val repo = Repo()
+        val model = MediaViewModel(repo, { work.add(it) }, { delivery.add(it) })
+        model.select("content://document/file")
+        work.removeAt(0)()
+        delivery.removeAt(0)()
+        model.send()
+        model.observer = null
+        work.removeAt(0)()
+        while (delivery.isNotEmpty()) delivery.removeAt(0)()
+        assertEquals("ACCEPTED", model.state.phase)
+        assertEquals(0, repo.cancels)
+        assertEquals(0, repo.stops)
+    }
+
+    @Test
+    fun cancellationBeforeQueuedSendNeverContactsReceiver() {
+        val work = mutableListOf<() -> Unit>()
+        val repo = Repo()
+        val model = MediaViewModel(repo, { work.add(it) }, { it() })
+        model.select("content://document/file")
+        work.removeAt(0)()
+        model.send()
+        model.stop()
+        while (work.isNotEmpty()) work.removeAt(0)()
+        assertEquals(0, repo.sends)
+        assertEquals("READY", model.state.phase)
+    }
+
+    @Test
     fun sharingStagesADocumentWithoutSendingOrReplacingAcceptedMedia() {
         val repo = Repo()
         val model = MediaViewModel(repo, { it() }, { it() })

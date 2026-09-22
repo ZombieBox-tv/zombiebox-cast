@@ -102,6 +102,7 @@ class CastActivity : Activity() {
         PairingDialog(
                 this,
                 discoveryModel,
+                companion,
                 { startActivityForResult(Intent(this, QrScanActivity::class.java), 103) },
                 { base, code -> companion.join(base, code, "") },
             )
@@ -180,6 +181,7 @@ class CastActivity : Activity() {
                     status.setText(R.string.stopped)
                 },
                 companion::send,
+                companion::sendText,
                 { id -> if (!ProjectionService.active && !capturePending) companion.select(id) },
                 {
                     if (!ProjectionService.active && !capturePending)

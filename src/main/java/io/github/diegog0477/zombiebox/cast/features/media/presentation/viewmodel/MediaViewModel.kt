@@ -19,8 +19,8 @@ class MediaViewModel(
         private set
 
     var observer: ((State) -> Unit)? = null
-    private var generation = 0
-    private var closed = false
+    @Volatile private var generation = 0
+    @Volatile private var closed = false
     private var ownsTransfer = false
     val busy
         get() = state.phase in listOf("READING", "SENDING", "STOPPING")
@@ -69,6 +69,7 @@ class MediaViewModel(
         ownsTransfer = true
         update(state.copy(phase = "SENDING", percent = 0))
         execute {
+            if (closed || request != generation) return@execute
             val phase =
                 try {
                     repository.send(document) { percent ->
@@ -106,8 +107,8 @@ class MediaViewModel(
         closed = true
         ++generation
         observer = null
-        // Once accepted the TV owns playback. Rotation/exit cancels an unfinished
-        // transfer, never an already handed-off file.
+        // The service owns this model across screen recreation/exit. Service teardown
+        // cancels an unfinished transfer, never an already handed-off file.
         if (ownsTransfer && state.phase != "ACCEPTED") {
             repository.cancel()
             execute {

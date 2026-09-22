@@ -22,3 +22,5 @@ Recreation can inspect the original share again; unfinished foreground transfers
 retain their existing cancellation policy. Background/resumable uploads, multiple
 file queues and URL sending remain development work. JVM input/lifecycle tests and
 APK checks do not establish file-provider or TV acceptance on physical devices.
+
+Dev.34 supersedes the foreground-only lifetime described above: see [background transfer](background-media.md). Single-document sharing still requires explicit Send; URLs/multiple-document queues remain open.

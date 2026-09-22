@@ -64,13 +64,13 @@
     <string name="nav_activity">Activity</string>
     <string name="nav_settings">Settings</string>
     <string name="pair_phone">Pair with a TV</string>
-    <string name="pair_prompt">Open Settings → Pair a phone on your TV to get started.</string>
+    <string name="pair_prompt">Select a screen on your network or scan its pairing QR.</string>
     <string name="pair_instructions">
-        On the TV, open Settings → Pair a phone. Scan its QR or select the gateway and enter the
-        six-digit code.
+        Scan the QR shown on your TV to pair immediately. The QR is single-use and expires after 5
+        minutes.
     </string>
     <string name="scan_qr">Scan TV QR</string>
-    <string name="manual_pair">Or pair with a code</string>
+    <string name="manual_pair">Or select a gateway on your network / enter its URL</string>
     <string name="six_digit_code">Six-digit TV code</string>
     <string name="pair_compare">Confirm %1$s on the TV, then choose Allow.</string>
     <string name="pair_connected">Paired with %1$s</string>
@@ -193,9 +193,9 @@
     <string name="media_cancel">Cancel transfer / reset</string>
     <string name="media_stop">Stop on TV</string>
     <string name="media_limits">
-        MP4, MKV/WebM, MP3, WAV, FLAC or Ogg; up to 256 MiB with a known file size. Keep this screen
-        open during upload (maximum 5 minutes). The gateway checks compatibility before handing off
-        playback. No screen or microphone capture.
+        MP4, MKV/WebM, MP3, WAV, FLAC or Ogg; up to 256 MiB with a known file size. Upload continues
+        in the background with a cancel notification (gateway upload limit: 5 minutes). The gateway
+        checks compatibility before handing off playback. No screen or microphone capture.
     </string>
     <string name="media_reading">Checking media…</string>
     <string name="media_uploading">Uploading: %1$d%% — preparing playback…</string>
@@ -219,4 +219,29 @@
         file; tap Send to start. Stop existing TV media before selecting another file.
     </string>
     <string name="media_target">Target: %1$s</string>
+    <string name="media_transfer_channel">Media transfer</string>
+    <string name="media_background">
+        Sending to your paired screen. You can leave this screen.
+    </string>
+    <string name="media_notification_denied">
+        Notifications are off. Reopen Media to cancel, or use Android active apps.
+    </string>
+    <string name="pair_find_screens">Find screens</string>
+    <string name="pair_select_screen">
+        Select a screen, then compare the six-digit code and accept on the TV.
+    </string>
+    <string name="pair_searching">Finding screens…</string>
+    <string name="pair_no_screens">
+        No screens are ready. Open Zombie Box on your TV and refresh.
+    </string>
+    <string name="pair_target_failed">
+        Could not connect. Check the gateway address and try again.
+    </string>
+    <string name="remote_keyboard">Type on TV</string>
+    <string name="remote_text_hint">Text to paste into the selected TV field</string>
+    <string name="remote_text_send">Paste on TV</string>
+    <string name="remote_text_focus">
+        Select a search or text field on the TV. Password and consent fields are excluded.
+    </string>
+    <string name="remote_text_ready">Ready to paste into the selected TV field.</string>
 </resources>

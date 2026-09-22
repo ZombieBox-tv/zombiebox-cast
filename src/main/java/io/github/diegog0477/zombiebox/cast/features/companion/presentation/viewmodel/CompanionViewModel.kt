@@ -16,21 +16,45 @@ class CompanionViewModel(
         val phase: String = "",
         val target: CompanionStatus? = null,
         val targets: List<TrustedTarget> = emptyList(),
+        val nearby: List<PairingTarget> = emptyList(),
     )
 
     var state = State(targets = repository.targets())
         private set
 
     var observer: ((State) -> Unit)? = null
+    var pairingObserver: ((State) -> Unit)? = null
     var paired: (() -> Unit)? = null
     private var pending: PairingAttempt? = null
     private var closed = false
     private var deferred: (() -> Unit)? = null
 
-    fun join(address: String, code: String, qr: String) =
+    fun discoverTargets(address: String) =
         work(defer = true) {
-            pending = repository.join(address, code, qr)
-            state.copy(comparison = pending!!.request.comparison, phase = "PENDING", target = null)
+            state.copy(nearby = repository.nearbyTargets(address), phase = "SELECT_TARGET")
+        }
+
+    fun join(address: String, targetId: String, qr: String) =
+        work(defer = true) {
+            val attempt = repository.join(address, targetId, qr)
+            pending = attempt
+            if (attempt.request.state == "APPROVED") {
+                repository.activate(attempt)
+                pending = null
+                state.copy(
+                    comparison = "",
+                    phase = "APPROVED",
+                    target = repository.status(),
+                    targets = repository.targets(),
+                    nearby = emptyList(),
+                )
+            } else
+                state.copy(
+                    comparison = attempt.request.comparison,
+                    phase = attempt.request.state,
+                    target = null,
+                    nearby = emptyList(),
+                )
         }
 
     fun refresh(reconnect: Boolean = false) = work {
@@ -67,6 +91,15 @@ class CompanionViewModel(
         }
     }
 
+    fun sendText(text: String) {
+        val target = state.target ?: return
+        if (!target.remoteOnline || target.textInputId.isEmpty()) return
+        work(defer = true) {
+            repository.sendText(text, target.textInputId)
+            state.copy(phase = "SENT")
+        }
+    }
+
     fun select(id: String) =
         work(defer = true) {
             repository.select(id)
@@ -92,6 +125,7 @@ class CompanionViewModel(
         }
         state = state.copy(busy = true, failed = false)
         observer?.invoke(state)
+        pairingObserver?.invoke(state)
         execute {
             val next =
                 try {
@@ -103,6 +137,7 @@ class CompanionViewModel(
                 if (!closed) {
                     state = next
                     observer?.invoke(state)
+                    pairingObserver?.invoke(state)
                     if (next.phase in listOf("APPROVED", "FORGOTTEN")) paired?.invoke()
                     val nextAction = deferred
                     deferred = null
@@ -116,6 +151,7 @@ class CompanionViewModel(
         closed = true
         deferred = null
         observer = null
+        pairingObserver = null
         paired = null
     }
 }

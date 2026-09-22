@@ -7,7 +7,9 @@ data class TrustedTarget(val id: String, val name: String)
 interface CompanionRepository {
     val paired: Boolean
 
-    fun join(address: String, code: String, qr: String): PairingAttempt
+    fun join(address: String, targetId: String, qr: String): PairingAttempt
+
+    fun nearbyTargets(address: String): List<PairingTarget>
 
     fun await(attempt: PairingAttempt): PairingRequest
 
@@ -18,6 +20,8 @@ interface CompanionRepository {
     fun reconnect(): CompanionStatus
 
     fun send(action: String, provider: String)
+
+    fun sendText(text: String, inputId: String)
 
     fun forget()
 
