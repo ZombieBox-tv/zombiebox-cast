@@ -165,3 +165,7 @@ Direct QR pairing and network screen selection, icon-based remote with service m
 ## dev.35 increment
 
 Direct public URL queues and Android text sharing, plus bounded native DIAL discovery and confirmed Home launch with manual fallback. No automatic launch or pairing consent through discovery.
+
+## dev.36 distribution
+
+Production signing identity is selected for both APKs; see [release signing](docs/release-signing.md). DIAL protocol notices are embedded. VersionCode 36; no runtime feature or physical qualification claim.
