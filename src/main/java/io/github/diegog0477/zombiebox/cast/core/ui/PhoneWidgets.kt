@@ -5,6 +5,7 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import io.github.diegog0477.zombiebox.cast.R
@@ -44,6 +45,7 @@ class PhoneWidgets(val context: Context) {
     fun action(text: String, selected: Boolean = false, click: () -> Unit) =
         Button(context).apply {
             this.text = text
+            isSelected = selected
             isAllCaps = false
             textSize = 15f
             setTextColor(
@@ -66,16 +68,48 @@ class PhoneWidgets(val context: Context) {
             setOnClickListener { click() }
         }
 
-    fun navigation(text: String, selected: Boolean, click: () -> Unit) =
+    fun navigation(text: String, selected: Boolean, icon: Int, click: () -> Unit) =
         action(text, click = click).apply {
             textSize = 12f
             isSelected = selected
+            val drawable = context.getDrawable(icon)!!.mutate()
+            drawable.setTint(if (selected) accent else muted)
+            drawable.setBounds(0, 0, dp(24), dp(24))
+            setCompoundDrawables(null, drawable, null, null)
+            compoundDrawablePadding = dp(4)
             setTextColor(if (selected) accent else muted)
             background =
                 StateListDrawable().apply {
                     addState(intArrayOf(android.R.attr.state_focused), shape(surface, accent))
                     addState(intArrayOf(android.R.attr.state_pressed), shape(surface))
                     addState(intArrayOf(), shape(this@PhoneWidgets.background))
+                }
+        }
+
+    fun iconAction(icon: Int, label: Int, click: () -> Unit) =
+        ImageButton(context).apply {
+            setImageDrawable(
+                context.getDrawable(icon)?.mutate()?.apply { setTint(this@PhoneWidgets.foreground) }
+            )
+            contentDescription = context.getString(label)
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+            background =
+                StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_focused), shape(surface, accent))
+                    addState(intArrayOf(android.R.attr.state_pressed), shape(surface))
+                    addState(intArrayOf(), shape(this@PhoneWidgets.background))
+                }
+            setOnClickListener { click() }
+        }
+
+    fun provider(text: String, color: Int, click: () -> Unit) =
+        action(text, click = click).apply {
+            setTextColor(color)
+            background =
+                StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_focused), shape(surface, color))
+                    addState(intArrayOf(android.R.attr.state_pressed), shape(surface, color))
+                    addState(intArrayOf(), shape(surface))
                 }
         }
 

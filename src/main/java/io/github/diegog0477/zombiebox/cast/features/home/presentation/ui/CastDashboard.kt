@@ -46,6 +46,7 @@ class CastDashboard(
     private val resultStatus = ui.label(R.string.remote_no_commands, 15f, ui.muted)
     private val pairButton = ui.action(context.getString(R.string.pair_phone), click = pair)
     val status = ui.label(R.string.ready, 16f, ui.accent)
+    private val videoDetail = ui.label("", 13f, ui.muted).apply { visibility = GONE }
     private val options = CaptureOptions(context, changePreferences).apply { render(preferences) }
     val audioStatus
         get() = options.audioStatus
@@ -67,7 +68,8 @@ class CastDashboard(
         setBackgroundColor(ui.background)
         val content = ui.column().apply { setPadding(ui.dp(20), ui.dp(12), ui.dp(20), ui.dp(12)) }
         val title = context.getString(R.string.cast_title)
-        content.addView(
+        val header = ui.row()
+        header.addView(
             ui.label(title, 30f).apply {
                 setTypeface(null, Typeface.BOLD)
                 text =
@@ -81,8 +83,18 @@ class CastDashboard(
                                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
                             )
                     }
-            }
+            },
+            LayoutParams(0, -2, 1f),
         )
+        header.addView(
+            ui.iconAction(R.drawable.ic_cast, R.string.pair_phone) { if (!sharing) pair() },
+            LayoutParams(ui.dp(48), ui.dp(48)),
+        )
+        header.addView(
+            ui.iconAction(R.drawable.ic_settings, R.string.nav_settings) { showPage(4) },
+            LayoutParams(ui.dp(48), ui.dp(48)),
+        )
+        content.addView(header)
         content.addView(ui.label(R.string.cast_subtitle, 16f, ui.muted))
         val modes = ui.row()
         for ((index, label) in
@@ -108,6 +120,7 @@ class CastDashboard(
         val sourceText = ui.column()
         sourceText.addView(ui.label(R.string.this_phone, 23f))
         sourceText.addView(status)
+        sourceText.addView(videoDetail)
         sourceText.addView(ui.label(R.string.screen_detail, 16f, ui.muted))
         sourceRow.addView(sourceText, LayoutParams(0, -2, 1f))
         source.addView(sourceRow)
@@ -170,11 +183,28 @@ class CastDashboard(
                 )
                 .withIndex()) {
             navigation.addView(
-                ui.navigation(context.getString(name), i == page) { showPage(i) },
+                ui.navigation(
+                    context.getString(name),
+                    i == page,
+                    listOf(
+                        R.drawable.ic_home,
+                        R.drawable.ic_devices,
+                        R.drawable.ic_remote,
+                        R.drawable.ic_activity,
+                        R.drawable.ic_settings,
+                    )[i],
+                ) {
+                    showPage(i)
+                },
                 LayoutParams(0, -2, 1f),
             )
         }
         scroll.post { scroll.scrollTo(0, scrollPositions[page]) }
+    }
+
+    fun videoProfile(width: Int, height: Int, fps: Int) {
+        videoDetail.visibility = if (width > 0 && height > 0 && fps > 0) VISIBLE else GONE
+        videoDetail.text = context.getString(R.string.video_profile, width, height, fps)
     }
 
     fun renderPreferences(value: CapturePreferences) = options.render(value)

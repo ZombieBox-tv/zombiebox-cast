@@ -41,6 +41,16 @@ class CastActivity : Activity() {
     private var capturePending = false
     private val serviceStatus =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { preferences, key ->
+            if (
+                key in listOf("videoWidth", "videoHeight", "videoFps", "status") &&
+                    ::dashboard.isInitialized
+            ) {
+                dashboard.videoProfile(
+                    if (ProjectionService.active) preferences.getInt("videoWidth", 0) else 0,
+                    preferences.getInt("videoHeight", 0),
+                    preferences.getInt("videoFps", 0),
+                )
+            }
             if (key == "audioStatus" && ::audioStatus.isInitialized) renderAudioStatus()
             if (key == "status" && ::status.isInitialized) {
                 status.setText(
@@ -252,6 +262,7 @@ class CastActivity : Activity() {
                             .putExtra("maxHeight", video.maxHeight)
                             .putExtra("fps", video.fps)
                             .putExtra("keyFrameSeconds", capturePreferences.state.keyFrameSeconds)
+                            .putExtra("orientation", capturePreferences.state.orientation.name)
                             .putExtra("bitrate", video.bitrate)
                             .putExtra("host", grant.host)
                             .putExtra("port", grant.port)

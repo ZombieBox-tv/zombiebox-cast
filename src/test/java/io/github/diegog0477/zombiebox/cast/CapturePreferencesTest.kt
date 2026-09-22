@@ -51,7 +51,8 @@ class CapturePreferencesTest {
                 }
             }
         val model = CapturePreferencesViewModel(repository)
-        val selected = CapturePreferences(CaptureQuality.SD, true, true)
+        val selected =
+            CapturePreferences(CaptureQuality.SD, true, true, CaptureOrientation.LANDSCAPE)
         model.update(selected)
         model.lock(true)
         model.update(CapturePreferences())
@@ -60,5 +61,48 @@ class CapturePreferencesTest {
         model.lock(false)
         model.update(CapturePreferences())
         assertEquals(CapturePreferences(), repository.saved)
+    }
+
+    @Test
+    fun fullHdIsBoundedAndRecoveryOnlyLowersBudgets() {
+        val receiver = CastVideo(1920, 1080, 30, 4000000)
+        val video = CapturePreferences(CaptureQuality.FULL_HD).video(receiver)
+        assertEquals(1920 to 1080, video.dimensions(1920, 1080, 2, 2))
+        assertEquals(1280, CapturePreferences(CaptureQuality.HD).video(receiver).maxWidth)
+        assertEquals(640, CapturePreferences(CaptureQuality.FULL_HD).video(CastVideo()).maxWidth)
+        val tiers = video.fallbacks()
+        assertEquals(360, tiers.last().maxHeight)
+        for ((higher, lower) in tiers.zipWithNext()) {
+            assertTrue(lower.maxWidth <= higher.maxWidth && lower.maxHeight <= higher.maxHeight)
+            assertTrue(lower.fps <= higher.fps && lower.bitrate <= higher.bitrate)
+        }
+    }
+
+    @Test
+    fun fixedFrameIgnoresSourceRotationButKeepsReceiverLimits() {
+        val receiver = CastVideo(1920, 1080, 30, 4000000)
+        for (orientation in listOf(CaptureOrientation.PORTRAIT, CaptureOrientation.LANDSCAPE)) {
+            assertFalse(orientation.supported(31))
+            assertEquals(CaptureOrientation.AUTO, orientation.effective(21))
+            assertTrue(orientation.supported(32))
+            val source = orientation.source(1080, 1920)
+            assertEquals(source, orientation.source(1920, 1080))
+            val (w, h) = receiver.dimensions(source.first, source.second, 2, 2)
+            assertTrue(w <= receiver.maxWidth && h <= receiver.maxHeight)
+            assertTrue(
+                kotlin.math.abs(w.toDouble() / h - source.first.toDouble() / source.second) < 0.01
+            )
+        }
+        assertEquals(1080 to 1920, CaptureOrientation.AUTO.source(1080, 1920))
+        assertTrue(CaptureOrientation.AUTO.supported(21))
+    }
+
+    @Test
+    fun oemOutputCannotSilentlyRaiseProfileOrLevel() {
+        assertTrue(AvcEnvelope.accepts(byteArrayOf(0x67, 66, 0, 40), 1920, 1080))
+        assertFalse(AvcEnvelope.accepts(byteArrayOf(0x67, 66, 0, 40), 1280, 720))
+        assertFalse(AvcEnvelope.accepts(byteArrayOf(0x67, 100, 0, 40), 1920, 1080))
+        assertFalse(AvcEnvelope.accepts(byteArrayOf(0x67, 66, 0, 51), 1920, 1080))
+        assertFalse(AvcEnvelope.accepts(byteArrayOf(0x67), 1920, 1080))
     }
 }

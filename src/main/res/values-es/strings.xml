@@ -143,4 +143,17 @@
         Usa menos ancho de banda y más fotogramas de recuperación. El retraso real depende de la TV
         y la red.
     </string>
+    <string name="quality_1080">1080p</string>
+    <string name="orientation_title">Orientación de salida</string>
+    <string name="orientation_portrait">Vertical</string>
+    <string name="orientation_landscape">Horizontal</string>
+    <string name="orientation_detail">
+        Fija el marco de salida. Las apps mantienen su orientación; el espacio libre muestra bandas
+        negras.
+    </string>
+    <string name="orientation_legacy">
+        El marco fijo necesita Android 12L o posterior para conservar la proporción. Este teléfono
+        sigue al contenido capturado.
+    </string>
+    <string name="video_profile">Perfil de vídeo · %1$d × %2$d · %3$d fps</string>
 </resources>

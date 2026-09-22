@@ -128,11 +128,24 @@
     <string name="quality_480">480p</string>
     <string name="quality_720">720p</string>
     <string name="quality_limit">
-        Upper limit; your TV may require a lower resolution. 1080p sending is not available yet.
+        Upper limit; your TV, phone encoder or recovery may require a lower resolution.
     </string>
     <string name="low_latency">Low latency mode</string>
     <string name="low_latency_detail">
         Uses less bandwidth and more frequent recovery frames. Actual delay depends on the TV and
         network.
     </string>
+    <string name="quality_1080">1080p</string>
+    <string name="orientation_title">Output orientation</string>
+    <string name="orientation_portrait">Portrait</string>
+    <string name="orientation_landscape">Landscape</string>
+    <string name="orientation_detail">
+        Fix the output frame. Your apps keep their own orientation; unused space appears as black
+        bars.
+    </string>
+    <string name="orientation_legacy">
+        Fixed framing requires Android 12L or newer to preserve aspect ratio. This phone follows the
+        captured content.
+    </string>
+    <string name="video_profile">Video profile · %1$d × %2$d · %3$d fps</string>
 </resources>

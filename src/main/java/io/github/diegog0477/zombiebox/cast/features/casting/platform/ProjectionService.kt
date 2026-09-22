@@ -10,6 +10,7 @@ import android.os.*
 import android.util.Base64
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureOrientation
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
 import io.github.diegog0477.zombiebox.shared.GatewayFailure
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong
 class ProjectionService : Service() {
     private var videoProfile = CastVideo()
     private var keyFrameSeconds = 2
+    private var orientation = CaptureOrientation.AUTO
 
     companion object {
         @Volatile
@@ -64,6 +66,11 @@ class ProjectionService : Service() {
                     stopSelf()
                     return START_NOT_STICKY
                 }
+        orientation =
+            (CaptureOrientation.values().firstOrNull {
+                    it.name == intent.getStringExtra("orientation")
+                } ?: CaptureOrientation.AUTO)
+                .effective(Build.VERSION.SDK_INT)
         shareAudio = intent.getBooleanExtra("audio", false)
         keyFrameSeconds = intent.getIntExtra("keyFrameSeconds", 2).coerceIn(1, 2)
         try {
@@ -97,7 +104,13 @@ class ProjectionService : Service() {
             )
             running = true
             active = true
-            prefs.edit().putString("status", "BUFFERING").apply()
+            prefs
+                .edit()
+                .remove("videoWidth")
+                .remove("videoHeight")
+                .remove("videoFps")
+                .putString("status", "BUFFERING")
+                .apply()
             publisherFactory = {
                 RtspPublisher(
                     intent.getStringExtra("host")!!,
@@ -160,6 +173,16 @@ class ProjectionService : Service() {
                     projection,
                     videoProfile,
                     keyFrameSeconds,
+                    orientation,
+                    SurfaceEncoderFactory(),
+                    { width, height, fps ->
+                        prefs
+                            .edit()
+                            .putInt("videoWidth", width)
+                            .putInt("videoHeight", height)
+                            .putInt("videoFps", fps)
+                            .apply()
+                    },
                     resources.displayMetrics.densityDpi,
                     { captureSize },
                     publisherFactory,

@@ -3,13 +3,13 @@ package io.github.diegog0477.zombiebox.cast.features.casting.platform
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.MediaCodec
-import android.media.MediaCodecInfo
-import android.media.MediaFormat
 import android.media.projection.MediaProjection
 import android.os.Build
 import android.os.SystemClock
 import android.util.Base64
 import android.view.Surface
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.AvcEnvelope
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureOrientation
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtpH264
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
@@ -20,6 +20,9 @@ class ProjectionEncoder(
     private val projection: MediaProjection,
     private val profile: CastVideo,
     private val keyFrameSeconds: Int,
+    private val orientation: CaptureOrientation,
+    private val encoders: SurfaceEncoders,
+    private val videoState: (Int, Int, Int) -> Unit,
     private val density: Int,
     private val dimensions: () -> Pair<Int, Int>,
     private val publisherFactory: () -> RtspPublisher,
@@ -43,7 +46,7 @@ class ProjectionEncoder(
             while (alive()) {
                 val started = SystemClock.elapsedRealtime()
                 try {
-                    stream(dimensions())
+                    stream(dimensions(), failures)
                     // A changed capture size is a normal reconfiguration, not a failure.
                 } catch (_: Exception) {
                     if (!alive()) break
@@ -70,7 +73,7 @@ class ProjectionEncoder(
         publisher?.close()
     }
 
-    private fun stream(sourceSize: Pair<Int, Int>) {
+    private fun stream(sourceSize: Pair<Int, Int>, recovery: Int) {
         var codec: MediaCodec? = null
         var surface: Surface? = null
         var audio: PlaybackAudio? = null
@@ -92,26 +95,19 @@ class ProjectionEncoder(
                 audio = null
                 audioState("UNAVAILABLE")
             }
-            val (width, height) = profile.dimensions(sourceSize.first, sourceSize.second)
-            val format =
-                MediaFormat.createVideoFormat("video/avc", width, height).apply {
-                    setInteger(
-                        MediaFormat.KEY_COLOR_FORMAT,
-                        MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
-                    )
-                    setInteger(MediaFormat.KEY_BIT_RATE, profile.bitrate)
-                    setInteger(MediaFormat.KEY_FRAME_RATE, profile.fps)
-                    setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, keyFrameSeconds)
-                    setInteger(
-                        MediaFormat.KEY_PROFILE,
-                        MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline,
-                    )
-                }
-            val encoder = MediaCodec.createEncoderByType("video/avc")
+            val startedEncoder =
+                encoders.open(
+                    profile,
+                    orientation.source(sourceSize.first, sourceSize.second),
+                    recovery,
+                    keyFrameSeconds,
+                )
+            val encoder = startedEncoder.codec
+            val width = startedEncoder.width
+            val height = startedEncoder.height
             codec = encoder
-            encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            surface = encoder.createInputSurface()
-            encoder.start()
+            surface = startedEncoder.surface
+            videoState(width, height, startedEncoder.fps)
             if (display == null) {
                 display =
                     projection.createVirtualDisplay(
@@ -152,6 +148,9 @@ class ProjectionEncoder(
                             else emptyList()
                     val sps = parameters.first { it.isNotEmpty() && it[0].toInt() and 31 == 7 }
                     val pps = parameters.first { it.isNotEmpty() && it[0].toInt() and 31 == 8 }
+                    check(AvcEnvelope.accepts(sps, width, height)) {
+                        "Encoder exceeded the negotiated AVC profile/level"
+                    }
                     connection.connect(sps, pps, audio != null) {
                         Base64.encodeToString(it, Base64.NO_WRAP)
                     }

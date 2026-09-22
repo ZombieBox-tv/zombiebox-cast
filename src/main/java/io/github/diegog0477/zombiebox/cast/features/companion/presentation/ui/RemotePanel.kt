@@ -72,19 +72,33 @@ class RemotePanel(context: Context, send: (String, String) -> Unit) : LinearLayo
             listOf(R.string.remote_quieter to "VOLUME_DOWN", R.string.remote_louder to "VOLUME_UP")
         )
         addView(widgets.label(R.string.remote_apps, 20f))
-        for ((label, provider) in
+        val providers =
             listOf(
-                R.string.provider_youtube to "youtube",
-                R.string.provider_plex to "plex",
-                R.string.provider_stremio to "stremio",
-                R.string.provider_jellyfin to "jellyfin",
-                R.string.provider_iptv to "iptv",
-                R.string.provider_spotify to "spotify",
-                R.string.provider_airplay to "airplay",
-            )) {
-            val button = widgets.action(context.getString(label)) { send("PROVIDER", provider) }
-            buttons.add(button)
-            addView(button, LayoutParams(-1, -2).apply { bottomMargin = widgets.dp(6) })
+                Triple(R.string.provider_youtube, "youtube", R.color.provider_youtube),
+                Triple(R.string.provider_plex, "plex", R.color.provider_plex),
+                Triple(R.string.provider_stremio, "stremio", R.color.provider_stremio),
+                Triple(R.string.provider_jellyfin, "jellyfin", R.color.provider_jellyfin),
+                Triple(R.string.provider_iptv, "iptv", R.color.provider_iptv),
+                Triple(R.string.provider_spotify, "spotify", R.color.provider_spotify),
+                Triple(R.string.provider_airplay, "airplay", R.color.provider_airplay),
+            )
+        for (group in providers.chunked(2)) {
+            val row = widgets.row()
+            for ((label, provider, color) in group) {
+                val button =
+                    widgets.provider(context.getString(label), context.resources.getColor(color)) {
+                        send("PROVIDER", provider)
+                    }
+                buttons.add(button)
+                row.addView(
+                    button,
+                    LayoutParams(0, -2, 1f).apply {
+                        setMargins(widgets.dp(3), widgets.dp(4), widgets.dp(3), widgets.dp(4))
+                    },
+                )
+            }
+            if (group.size == 1) row.addView(View(context), LayoutParams(0, 1, 1f))
+            addView(row)
         }
         available(false)
     }

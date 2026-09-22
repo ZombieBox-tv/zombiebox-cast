@@ -98,3 +98,7 @@ Verification: debug build, lint and 18 JVM tests pass. APK audit remains minSdk2
 with no native libraries. Full visual acceptance, orientation lock, 1080p sending,
 Media/audio-only flows, session history and extended Remote remain open; no
 physical acceptance or milestone completion is claimed.
+
+## dev.27 increment
+
+Adds negotiated 1080p ceilings, capability-filtered surface encoder selection, bounded configuration/runtime fallback and AVC output profile/level checks. Output orientation Auto/Portrait/Landscape is persisted; fixed aspect-preserving framing is enabled on API32+ and unavailable with an explanation on older phones. Header/navigation icons and a provider-accent Remote grid refine the reference composition. Actual configured dimensions are visible. Complete visual, OEM and physical acceptance remain open.

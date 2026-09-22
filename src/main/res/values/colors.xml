@@ -4,4 +4,11 @@
     <color name="cast_surface">#141C1F</color>
     <color name="cast_text">#F3F6F5</color>
     <color name="cast_muted">#A5B0B5</color>
+    <color name="provider_youtube">#FF5252</color>
+    <color name="provider_plex">#F6AD35</color>
+    <color name="provider_stremio">#A285FF</color>
+    <color name="provider_jellyfin">#4BD5EB</color>
+    <color name="provider_iptv">#60B6FF</color>
+    <color name="provider_spotify">#4CEF69</color>
+    <color name="provider_airplay">#DCE3E8</color>
 </resources>

@@ -136,7 +136,10 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
             request(
                 "POST",
                 "/v1/cast",
-                JSONObject().put("receiverId", receiver).put("replaceExisting", true),
+                JSONObject()
+                    .put("receiverId", receiver)
+                    .put("replaceExisting", true)
+                    .put("maxVideoHeight", 1080),
             )
         val video = result.optJSONObject("video")
         return CastGrant(
