@@ -156,3 +156,8 @@ Single local audio/video file intake through Android Sharesheet, bounded consent
 
 Direct QR pairing and network screen selection, icon-based remote with service marks and keyboard, service-owned background file transfer with cancellation notification. APK versionCode 34; URLs/queues/resumable upload and physical acceptance remain open.
 Product exit gates and deferred physical acceptance remain open.
+
+## dev.35 checkpoint
+
+Direct public URL queues and Android text sharing, plus bounded native DIAL discovery and confirmed Home launch with manual fallback. No automatic launch or pairing consent through discovery.
+Product milestone completion still requires its recorded acceptance gates.

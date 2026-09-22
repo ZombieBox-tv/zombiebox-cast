@@ -262,4 +262,43 @@
         Selecciona un campo de búsqueda o texto en la TV. Se excluyen contraseñas y autorizaciones.
     </string>
     <string name="remote_text_ready">Listo para pegar en el campo seleccionado de la TV.</string>
+    <string name="queue_title">Enlaces y cola</string>
+    <string name="queue_description">
+        Pega enlaces directos a archivos multimedia, uno por línea. Revisa la TV seleccionada antes
+        de comenzar.
+    </string>
+    <string name="queue_hint">https://example.com/video.mp4</string>
+    <string name="queue_idle">No hay una cola activa</string>
+    <string name="queue_start">Reproducir cola en la TV</string>
+    <string name="queue_stop">Detener cola</string>
+    <string name="queue_limits">
+        Hasta 16 enlaces HTTP(S) públicos a archivos, 256 MiB por archivo. No admite páginas
+        web, enlaces con inicio de sesión, manifiestos en vivo ni direcciones de red privada. El
+        gateway continúa al cerrar esta pantalla; reiniciarlo borra la cola.
+    </string>
+    <string name="queue_failed">
+        La cola no pudo continuar. Revisa el enlace y la disponibilidad de la TV e inicia de nuevo.
+    </string>
+    <string name="queue_preparing">Preparando elemento %1$d de %2$d</string>
+    <string name="queue_playing">Reproduciendo elemento %1$d de %2$d</string>
+    <string name="queue_finished">Cola finalizada</string>
+    <string name="dial_title">Abrir Client en la TV</string>
+    <string name="dial_description">
+        Busca Zombie Client instalado mediante DIAL nativo. Primero activa la apertura nativa de
+        Home en los ajustes avanzados de la TV. Abrir la app no empareja dispositivos; vuelve para
+        seleccionar la pantalla o escanear su QR.
+    </string>
+    <string name="dial_empty">
+        No se encontró un lanzador nativo compatible. Abre Zombie Client en la TV y usa la detección
+        de gateway o el emparejamiento QR.
+    </string>
+    <string name="dial_searching">Consultando lanzadores nativos…</string>
+    <string name="dial_running">
+        Client está abierto. Vuelve al emparejamiento y actualiza las pantallas.
+    </string>
+    <string name="dial_failed">
+        No se pudo confirmar la apertura nativa. Abre Client en la TV para continuar el
+        emparejamiento.
+    </string>
+    <string name="dial_choose">Selecciona una TV para abrir Zombie Client</string>
 </resources>

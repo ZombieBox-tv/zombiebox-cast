@@ -244,4 +244,43 @@
         Select a search or text field on the TV. Password and consent fields are excluded.
     </string>
     <string name="remote_text_ready">Ready to paste into the selected TV field.</string>
+    <string name="queue_title">
+        Web links &amp; queue
+    </string>
+    <string name="queue_description">
+        Paste direct media links, one per line. Review the selected TV before starting.
+    </string>
+    <string name="queue_hint">https://example.com/video.mp4</string>
+    <string name="queue_idle">No active queue</string>
+    <string name="queue_start">Play queue on TV</string>
+    <string name="queue_stop">Stop queue</string>
+    <string name="queue_limits">
+        Up to 16 public HTTP(S) file links, 256 MiB per file. Web pages, login links, live manifests
+        and private network addresses are unsupported here. The gateway continues the queue after
+        you close this screen; restarting the gateway clears it.
+    </string>
+    <string name="queue_failed">
+        The queue could not continue. Check the link and TV availability, then start again.
+    </string>
+    <string name="queue_preparing">Preparing item %1$d of %2$d</string>
+    <string name="queue_playing">Playing item %1$d of %2$d</string>
+    <string name="queue_finished">Queue finished</string>
+    <string name="dial_title">Open Client on TV</string>
+    <string name="dial_description">
+        Find an installed Zombie Client through native DIAL. Enable native Home launch in the TV
+        Advanced settings first. Opening the app does not pair devices; return to select the screen
+        or scan its QR.
+    </string>
+    <string name="dial_empty">
+        No compatible native launcher found. Open Zombie Client on the TV and use gateway discovery
+        or QR pairing.
+    </string>
+    <string name="dial_searching">Checking native TV launchers…</string>
+    <string name="dial_running">
+        Client is running. Return to pairing and refresh the screen list.
+    </string>
+    <string name="dial_failed">
+        Native launch could not be confirmed. Open Client on the TV to continue pairing.
+    </string>
+    <string name="dial_choose">Select a TV to open Zombie Client</string>
 </resources>

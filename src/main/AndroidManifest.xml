@@ -49,5 +49,21 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection"
         />
+        <activity
+            android:name=".features.mediaqueue.presentation.ui.MediaQueueActivity"
+            android:exported="true"
+            android:label="@string.queue_title"
+        >
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".features.dial.presentation.ui.DialActivity"
+            android:exported="false"
+            android:label="@string.dial_title"
+        />
     </application>
 </manifest>

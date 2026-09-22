@@ -2,8 +2,9 @@
 
 Phone-first API21+ companion, remote and MediaProjection sender APK.
 
-This is an independent repository in the Zombie Box workspace. Remotes and hosted
-releases are not configured yet; local commits/tags and dependency pins are real.
+This is an independent repository in the Zombie Box workspace.
+[Source and milestones](https://github.com/DiegoG0477/zombiebox-cast) are hosted on GitHub.
+Development checkpoints are not stable releases or physical compatibility claims.
 
 Application ID: `io.github.diegog0477.zombiebox.cast`; minSdk21.
 
@@ -160,3 +161,7 @@ Single local audio/video file intake through Android Sharesheet, bounded consent
 ## dev.34 increment
 
 Direct QR pairing and network screen selection, icon-based remote with service marks and keyboard, service-owned background file transfer with cancellation notification. APK versionCode 34; URLs/queues/resumable upload and physical acceptance remain open.
+
+## dev.35 increment
+
+Direct public URL queues and Android text sharing, plus bounded native DIAL discovery and confirmed Home launch with manual fallback. No automatic launch or pairing consent through discovery.

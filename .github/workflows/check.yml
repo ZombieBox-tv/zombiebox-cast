@@ -1,6 +1,8 @@
 name: Component checks
 on:
   push:
+    branches: [main]
+  workflow_dispatch:
   pull_request:
 permissions:
   contents: read
@@ -25,5 +27,9 @@ jobs:
           version: "0.10.0"
       - run: make format-check architecture-check
       - run: make deps deps-check
-      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          cmdline-tools-version: "15859902"
+          packages: "platforms;android-35 build-tools;35.0.0"
+          log-accepted-android-sdk-licenses: false
       - run: make check

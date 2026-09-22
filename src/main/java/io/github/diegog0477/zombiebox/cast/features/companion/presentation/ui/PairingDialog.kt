@@ -50,6 +50,18 @@ class PairingDialog(
                 scan()
             }
         )
+        form.addView(
+            ui.action(activity.getString(R.string.dial_title)) {
+                activity.startActivity(
+                    android.content.Intent(
+                        activity,
+                        io.github.diegog0477.zombiebox.cast.features.dial.presentation.ui
+                                .DialActivity::class
+                            .java,
+                    )
+                )
+            }
+        )
         form.addView(ui.label(R.string.manual_pair, 16f, ui.muted))
         form.addView(address)
         form.addView(

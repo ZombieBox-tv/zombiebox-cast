@@ -149,6 +149,18 @@ class MediaActivity : Activity() {
             }
         card.addView(progress, LinearLayout.LayoutParams(-1, ui.dp(12)))
         content.addView(card)
+        content.addView(
+            ui.action(getString(R.string.queue_title)) {
+                startActivity(
+                    Intent(
+                        this,
+                        io.github.diegog0477.zombiebox.cast.features.mediaqueue.presentation.ui
+                                .MediaQueueActivity::class
+                            .java,
+                    )
+                )
+            }
+        )
         val choose = ui.action(getString(R.string.media_choose)) { chooseDocument() }
         val send = ui.action(getString(R.string.media_send), true) { startTransfer() }
         val stop =
