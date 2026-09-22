@@ -16,6 +16,8 @@ import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receive
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.ui.CaptureOptions
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.ui.RemotePanel
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.viewmodel.CompanionViewModel
+import io.github.diegog0477.zombiebox.cast.features.history.domain.model.CaptureSession
+import io.github.diegog0477.zombiebox.cast.features.history.presentation.ui.HistoryPanel
 
 /** Renders phone surfaces; networking, credentials and capture remain outside this view. */
 class CastDashboard(
@@ -29,6 +31,7 @@ class CastDashboard(
     forget: () -> Unit,
     preferences: CapturePreferences,
     changePreferences: (CapturePreferences) -> Unit,
+    clearHistory: () -> Unit,
 ) : LinearLayout(context) {
     private val ui = PhoneWidgets(context)
     private val pages = ui.column()
@@ -36,6 +39,7 @@ class CastDashboard(
     private val devices = ui.column()
     private val remote = RemotePanel(context, send)
     private val activity = ui.column()
+    private val history = HistoryPanel(context, clearHistory)
     private val settings = ui.column()
     private val navigation = ui.row()
     private val deviceCards = ui.column()
@@ -154,6 +158,8 @@ class CastDashboard(
         devices.addView(ui.action(context.getString(R.string.pair_phone)) { if (!sharing) pair() })
         remote.addView(remoteStatus, 1)
         activity.addView(ui.label(R.string.nav_activity, 24f))
+        activity.addView(history)
+        activity.addView(ui.label(R.string.history_remote_title, 20f))
         activity.addView(resultStatus)
         settings.addView(ui.label(R.string.nav_settings, 24f))
         settings.addView(ui.label(R.string.audio_detail, 16f, ui.muted))
@@ -201,6 +207,8 @@ class CastDashboard(
         }
         scroll.post { scroll.scrollTo(0, scrollPositions[page]) }
     }
+
+    fun renderHistory(values: List<CaptureSession>) = history.render(values)
 
     fun videoProfile(width: Int, height: Int, fps: Int) {
         videoDetail.visibility = if (width > 0 && height > 0 && fps > 0) VISIBLE else GONE

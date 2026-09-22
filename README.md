@@ -104,3 +104,28 @@ physical acceptance or milestone completion is claimed.
 ## dev.27 increment
 
 Adds negotiated 1080p ceilings, capability-filtered surface encoder selection, bounded configuration/runtime fallback and AVC output profile/level checks. Output orientation Auto/Portrait/Landscape is persisted; fixed aspect-preserving framing is enabled on API32+ and unavailable with an explanation on older phones. Header/navigation icons and a provider-accent Remote grid refine the reference composition. Actual configured dimensions are visible. Complete visual, OEM and physical acceptance remain open.
+
+## dev.28 increment
+
+Activity now shows the last 30 actual mirroring sessions on this phone: receiver
+name, start/end timestamps, sender state, last configured video format and last
+observed audio state. Storage and lifecycle policy sit behind injected repositories;
+the ViewModel and models are platform-free. No stream, URL, token or screenshot is
+added to history. Existing Android backup exclusions apply.
+
+An unfinished session from an earlier process is shown as interrupted with an
+unknown end time. Reopening the app never restores projection consent or starts
+capture. Terminal records ignore late encoder/heartbeat callbacks. Clearing history
+requires confirmation and preserves active sessions. Corrupt/unknown storage falls
+back to an empty history; retention is bounded to 30 newest starts, independent of
+wall-clock changes. SharedPreferences uses asynchronous persistence, so abrupt
+power loss can lose the latest update. Receiver playback remains unverified.
+
+Media/audio-only flows, pending-pairing recreation, advanced Remote/backend choices,
+older-platform fixed framing, OEM integration and final visual acceptance remain
+open. 1080p negotiation and API32+ fixed framing were implemented in dev.27 and are
+still conditional on capability/evidence. No native dependency is added.
+
+Host verification: 27 Cast JVM tests, debug build/lint and formatting/architecture
+checks pass. APK audit: 1,376,115 bytes, minSdk21, signature verified, no native
+libraries. Physical projection/audio/visual acceptance remains deferred.

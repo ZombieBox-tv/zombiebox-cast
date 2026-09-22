@@ -17,6 +17,8 @@ import io.github.diegog0477.zombiebox.cast.features.companion.platform.QrScanAct
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.ui.PairingDialog
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.viewmodel.CompanionViewModel
 import io.github.diegog0477.zombiebox.cast.features.discovery.presentation.viewmodel.DiscoveryViewModel
+import io.github.diegog0477.zombiebox.cast.features.history.data.LocalHistoryStore
+import io.github.diegog0477.zombiebox.cast.features.history.presentation.viewmodel.HistoryViewModel
 import io.github.diegog0477.zombiebox.cast.features.home.presentation.ui.CastDashboard
 import io.github.diegog0477.zombiebox.shared.GatewayDiscovery
 import java.util.concurrent.Executors
@@ -25,6 +27,7 @@ import java.util.concurrent.Executors
 class CastActivity : Activity() {
     private val executor = Executors.newSingleThreadExecutor()
     private val handler = Handler()
+    private lateinit var history: HistoryViewModel
     private lateinit var repository: GatewayCastRepository
     private lateinit var capturePreferences: CapturePreferencesViewModel
     private lateinit var model: CastViewModel
@@ -41,6 +44,7 @@ class CastActivity : Activity() {
     private var capturePending = false
     private val serviceStatus =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { preferences, key ->
+            if (key == LocalHistoryStore.KEY && ::history.isInitialized) history.refresh()
             if (
                 key in listOf("videoWidth", "videoHeight", "videoFps", "status") &&
                     ::dashboard.isInitialized
@@ -130,6 +134,8 @@ class CastActivity : Activity() {
             CapturePreferencesViewModel(
                 LocalCapturePreferences(getSharedPreferences("cast", MODE_PRIVATE))
             )
+        history =
+            HistoryViewModel(LocalHistoryStore.create(getSharedPreferences("cast", MODE_PRIVATE)))
         repository = GatewayCastRepository(getSharedPreferences("cast", MODE_PRIVATE))
         val background = executor
         val ui = handler
@@ -177,7 +183,10 @@ class CastActivity : Activity() {
                 },
                 capturePreferences.state,
                 capturePreferences::update,
+                history::clearFinished,
             )
+        history.observer = dashboard::renderHistory
+        history.refresh()
         capturePreferences.observer = dashboard::renderPreferences
         dashboard.restoreNavigation(saved)
         status = dashboard.status
@@ -258,6 +267,13 @@ class CastActivity : Activity() {
                             .putExtra("audio", shareAudio)
                             .putExtra("consent", permission)
                             .putExtra("castId", grant.id)
+                            .putExtra(
+                                "receiverName",
+                                state.receivers
+                                    .firstOrNull { it.id == state.selected }
+                                    ?.name
+                                    .orEmpty(),
+                            )
                             .putExtra("maxWidth", video.maxWidth)
                             .putExtra("maxHeight", video.maxHeight)
                             .putExtra("fps", video.fps)
@@ -334,6 +350,7 @@ class CastActivity : Activity() {
         getSharedPreferences("cast", MODE_PRIVATE)
             .registerOnSharedPreferenceChangeListener(serviceStatus)
         resumed = true
+        history.refresh()
         if (::companion.isInitialized) {
             companion.refresh(reconnect = !capturePending && !ProjectionService.active)
             handler.removeCallbacks(companionTick)
@@ -380,6 +397,7 @@ class CastActivity : Activity() {
     }
 
     override fun onDestroy() {
+        history.observer = null
         capturePreferences.observer = null
         companion.close()
         handler.removeCallbacks(companionTick)

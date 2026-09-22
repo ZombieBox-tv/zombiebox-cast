@@ -13,6 +13,10 @@ import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepo
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureOrientation
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
+import io.github.diegog0477.zombiebox.cast.features.history.data.LocalHistoryStore
+import io.github.diegog0477.zombiebox.cast.features.history.domain.CaptureHistory
+import io.github.diegog0477.zombiebox.cast.features.history.domain.model.SessionAudio
+import io.github.diegog0477.zombiebox.cast.features.history.domain.model.SessionPhase
 import io.github.diegog0477.zombiebox.shared.GatewayFailure
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -43,6 +47,12 @@ class ProjectionService : Service() {
     private var projection: MediaProjection? = null
     private lateinit var repository: GatewayCastRepository
     private var castId = ""
+    private lateinit var history: CaptureHistory
+    private var historyId = ""
+
+    private fun recordPhase(phase: SessionPhase) {
+        if (::history.isInitialized && historyId.isNotEmpty()) history.phase(historyId, phase)
+    }
 
     override fun onBind(intent: Intent?) = null
 
@@ -73,6 +83,8 @@ class ProjectionService : Service() {
                 .effective(Build.VERSION.SDK_INT)
         shareAudio = intent.getBooleanExtra("audio", false)
         keyFrameSeconds = intent.getIntExtra("keyFrameSeconds", 2).coerceIn(1, 2)
+        history = LocalHistoryStore.create(prefs)
+        historyId = history.begin(intent.getStringExtra("receiverName").orEmpty(), shareAudio)
         try {
             videoProfile =
                 CastVideo(
@@ -147,6 +159,7 @@ class ProjectionService : Service() {
             Thread({ encode(activeProjection) }, "zombie-cast-encoder").start()
             encoderStarted = true
         } catch (_: Exception) {
+            recordPhase(SessionPhase.FAILED)
             prefs.edit().putString("status", "FAILED").apply()
             stopSelf()
         }
@@ -176,6 +189,7 @@ class ProjectionService : Service() {
                     orientation,
                     SurfaceEncoderFactory(),
                     { width, height, fps ->
+                        history.video(historyId, width, height, fps)
                         prefs
                             .edit()
                             .putInt("videoWidth", width)
@@ -191,9 +205,15 @@ class ProjectionService : Service() {
                     { value ->
                         ready.set(false)
                         waitingSince.set(SystemClock.elapsedRealtime())
+                        SessionPhase.values().firstOrNull { it.name == value }?.let(::recordPhase)
                         prefs.edit().putString("status", value).apply()
                     },
-                    { value -> prefs.edit().putString("audioStatus", value).apply() },
+                    { value ->
+                        SessionAudio.values()
+                            .firstOrNull { it.name == value }
+                            ?.let { history.audio(historyId, it) }
+                        prefs.edit().putString("audioStatus", value).apply()
+                    },
                 )
             encoder = capture
             heartbeat.scheduleWithFixedDelay(
@@ -206,6 +226,7 @@ class ProjectionService : Service() {
                             if (!ready.get()) {
                                 repository.ready(castId)
                                 ready.set(true)
+                                recordPhase(SessionPhase.SHARING)
                                 prefs.edit().putString("status", "SHARING").apply()
                             }
                         } catch (e: Exception) {
@@ -216,6 +237,7 @@ class ProjectionService : Service() {
                                         SystemClock.elapsedRealtime() - waitingSince.get() > 30000)
                             )
                                 main.post {
+                                    recordPhase(SessionPhase.FAILED)
                                     prefs.edit().putString("status", "FAILED").apply()
                                     stopSelf()
                                 }
@@ -227,8 +249,12 @@ class ProjectionService : Service() {
             )
             capture.run()
         } catch (_: Exception) {
-            if (running) prefs.edit().putString("status", "FAILED").apply()
+            if (running) {
+                recordPhase(SessionPhase.FAILED)
+                prefs.edit().putString("status", "FAILED").apply()
+            }
         } finally {
+            recordPhase(SessionPhase.STOPPED)
             running = false
             active = false
             heartbeat.shutdownNow()
@@ -279,6 +305,7 @@ class ProjectionService : Service() {
     }
 
     override fun onDestroy() {
+        recordPhase(SessionPhase.STOPPED)
         if (!encoderStarted && ::repository.isInitialized)
             Thread(
                     {
