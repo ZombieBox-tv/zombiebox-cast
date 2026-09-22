@@ -142,3 +142,8 @@ debug build/lint and APK audit pass (1,383,104 bytes, minSdk21, no native librar
 
 Native Media file screen, document consent, bounded upload/progress/cancel, accepted-file restoration and Stop. No capture/storage-wide permissions or native dependency added. Foreground-only upload; URL sending remains pending.
 Product milestones and deferred physical gates remain open.
+
+## dev.31 increment
+
+Pins the additive native-inventory protocol; no Cast runtime or APK version change. Full visual finishing, sender/OEM and broader Media flows remain pending.
+Product milestone and physical/public distribution gates remain open.
