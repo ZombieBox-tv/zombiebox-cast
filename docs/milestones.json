@@ -20,7 +20,8 @@
     "Dev.26: Persisted receiver-bounded capture settings, quiet navigation, decorative source card and restored tab/scroll. Full redesign and physical acceptance remain open.",
     "Dev.27: Adds negotiated 1080p ceilings, capability-filtered surface encoder selection, bounded configuration/runtime fallback and AVC output profile/level checks. Output orientation Auto/Portrait/Landscape is persisted; fixed aspect-preserving framing is enabled on API32+ and unavailable with an explanation on older phones. Header/navigation icons and a provider-accent Remote grid refine the reference composition. Actual configured dimensions are visible. Complete visual, OEM and physical acceptance remain open.",
     "Dev.28: bounded local Cast session history, lifecycle evidence, interrupted-process recovery and finished-session deletion. No product milestone or physical gate closes.",
-    "Dev.29: Audio-only API29+ mode uses consented playback capture and AAC publishing without a virtual display or video encoder. Mode-aware controls/history, old-gateway rejection, bounded recovery and audio-only RTSP keepalive are implemented. No native dependency added. Product and physical gates remain open."
+    "Dev.29: Audio-only API29+ mode uses consented playback capture and AAC publishing without a virtual display or video encoder. Mode-aware controls/history, old-gateway rejection, bounded recovery and audio-only RTSP keepalive are implemented. No native dependency added. Product and physical gates remain open.",
+    "Dev.30: Native Media file screen, document consent, bounded upload/progress/cancel, accepted-file restoration and Stop. No capture/storage-wide permissions or native dependency added. Foreground-only upload; URL sending remains pending. Product and physical gates remain open."
   ],
   "milestones": [
     {
@@ -38,5 +39,5 @@
       "remoteId": null
     }
   ],
-  "developmentCheckpoint": "v0.1.0-dev.29"
+  "developmentCheckpoint": "v0.1.0-dev.30"
 }

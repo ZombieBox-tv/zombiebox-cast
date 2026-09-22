@@ -192,4 +192,37 @@
         para compartir el audio permitido de apps.
     </string>
     <string name="this_phone_audio">Audio de este teléfono</string>
+    <string name="media_title">Tu contenido</string>
+    <string name="media_description">Envía un archivo de audio o vídeo a tu TV emparejada.</string>
+    <string name="media_back">Volver a Zombie Cast</string>
+    <string name="media_choose">Elegir un archivo</string>
+    <string name="media_empty">
+        Selecciona un archivo con el selector de documentos de Android.
+    </string>
+    <string name="media_send">Enviar a la TV</string>
+    <string name="media_cancel">Cancelar transferencia / restablecer</string>
+    <string name="media_stop">Detener en la TV</string>
+    <string name="media_limits">
+        MP4, MKV/WebM, MP3, WAV, FLAC u Ogg; hasta 256 MiB con tamaño conocido. Mantén esta pantalla
+        abierta durante la subida (máximo 5 minutos). El gateway comprueba la compatibilidad antes
+        de entregar la reproducción. Sin captura de pantalla ni micrófono.
+    </string>
+    <string name="media_reading">Comprobando contenido…</string>
+    <string name="media_uploading">Subiendo: %1$d%% — preparando reproducción…</string>
+    <string name="media_accepted">
+        Aceptado por el gateway. La reproducción se ha entregado a la TV; puedes salir de esta
+        pantalla. Esto no confirma que la TV haya comenzado a reproducir.
+    </string>
+    <string name="media_size">
+        Elige un archivo de entre 1 byte y 256 MiB con tamaño conocido.
+    </string>
+    <string name="media_failed">
+        Contenido no disponible. Comprueba emparejamiento, permiso del receptor, formato y espacio
+        del gateway. Restablece antes de reintentar.
+    </string>
+    <string name="media_stopping">Deteniendo transferencia o reproducción…</string>
+    <string name="media_selected">Seleccionado: %1$.1f MiB</string>
+    <string name="media_picker_missing">
+        No hay selector de documentos disponible en este teléfono.
+    </string>
 </resources>

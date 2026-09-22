@@ -192,6 +192,18 @@ class CastActivity : Activity() {
                 capturePreferences.state,
                 capturePreferences::update,
                 history::clearFinished,
+                {
+                    if (!ProjectionService.active && !capturePending)
+                        startActivityForResult(
+                            Intent(
+                                this,
+                                io.github.diegog0477.zombiebox.cast.features.media.presentation.ui
+                                        .MediaActivity::class
+                                    .java,
+                            ),
+                            104,
+                        )
+                },
             )
         history.observer = dashboard::renderHistory
         history.refresh()
@@ -413,6 +425,12 @@ class CastActivity : Activity() {
         super.onActivityResult(request, result, data)
         if (request == 103 && result == RESULT_OK && data != null && !ProjectionService.active) {
             companion.join("", "", data.getStringExtra("pairingQr") ?: "")
+        }
+        if (request == 104 && result == RESULT_OK && !ProjectionService.active && !capturePending) {
+            val mode =
+                if (data?.getStringExtra("mode") == "AUDIO") CaptureMode.AUDIO
+                else CaptureMode.SCREEN
+            capturePreferences.update(capturePreferences.state.copy(mode = mode))
         }
         if (request == 101) {
             capturePending = false

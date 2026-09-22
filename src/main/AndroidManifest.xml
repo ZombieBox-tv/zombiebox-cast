@@ -24,6 +24,10 @@
             android:name=".features.companion.platform.QrScanActivity"
             android:exported="false"
         />
+        <activity
+            android:name=".features.media.presentation.ui.MediaActivity"
+            android:exported="false"
+        />
         <service
             android:name="io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService"
             android:exported="false"

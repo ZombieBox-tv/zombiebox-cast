@@ -132,3 +132,8 @@ libraries. Physical projection/audio/visual acceptance remains deferred.
 
 Audio-only API29+ mode uses consented playback capture and AAC publishing without a virtual display or video encoder. Mode-aware controls/history, old-gateway rejection, bounded recovery and audio-only RTSP keepalive are implemented. No native dependency added.
 Product milestones and physical acceptance remain open.
+
+## dev.30 increment
+
+Native Media file screen, document consent, bounded upload/progress/cancel, accepted-file restoration and Stop. No capture/storage-wide permissions or native dependency added. Foreground-only upload; URL sending remains pending.
+Product milestones and deferred physical gates remain open.

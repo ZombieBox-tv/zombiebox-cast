@@ -1,6 +1,5 @@
 package io.github.diegog0477.zombiebox.cast.features.home.presentation.ui
 
-import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
@@ -33,6 +32,7 @@ class CastDashboard(
     preferences: CapturePreferences,
     private val changePreferences: (CapturePreferences) -> Unit,
     clearHistory: () -> Unit,
+    openMedia: () -> Unit,
 ) : LinearLayout(context) {
     private val ui = PhoneWidgets(context)
     private var preferences = preferences
@@ -111,11 +111,7 @@ class CastDashboard(
             val button =
                 ui.action(context.getString(label), index == 0) {
                     if (!sharing) {
-                        if (index == 1)
-                            AlertDialog.Builder(context)
-                                .setMessage(R.string.media_pending)
-                                .setPositiveButton(android.R.string.ok, null)
-                                .show()
+                        if (index == 1) openMedia()
                         else
                             changePreferences(
                                 this.preferences.copy(

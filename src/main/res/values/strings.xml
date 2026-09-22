@@ -184,4 +184,31 @@
         permitted app audio.
     </string>
     <string name="this_phone_audio">Audio from this phone</string>
+    <string name="media_title">Your media</string>
+    <string name="media_description">Send an audio or video file to your paired TV.</string>
+    <string name="media_back">Back to Zombie Cast</string>
+    <string name="media_choose">Choose a file</string>
+    <string name="media_empty">Select a file using the Android document picker.</string>
+    <string name="media_send">Send to TV</string>
+    <string name="media_cancel">Cancel transfer / reset</string>
+    <string name="media_stop">Stop on TV</string>
+    <string name="media_limits">
+        MP4, MKV/WebM, MP3, WAV, FLAC or Ogg; up to 256 MiB with a known file size. Keep this screen
+        open during upload (maximum 5 minutes). The gateway checks compatibility before handing off
+        playback. No screen or microphone capture.
+    </string>
+    <string name="media_reading">Checking media…</string>
+    <string name="media_uploading">Uploading: %1$d%% — preparing playback…</string>
+    <string name="media_accepted">
+        Accepted by the gateway. Playback is handed to the paired TV; you can leave this
+        screen. This is not confirmation that the TV has started playing.
+    </string>
+    <string name="media_size">Choose a file between 1 byte and 256 MiB with a known size.</string>
+    <string name="media_failed">
+        Media unavailable. Check pairing, receiver permission, format and gateway space. Reset
+        before retrying.
+    </string>
+    <string name="media_stopping">Stopping transfer or playback…</string>
+    <string name="media_selected">Selected: %1$.1f MiB</string>
+    <string name="media_picker_missing">No document picker is available on this phone.</string>
 </resources>

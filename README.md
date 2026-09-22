@@ -137,3 +137,8 @@ Product milestones and physical acceptance remain open.
 
 See [Audio sharing](docs/audio-sharing.md). Host verification: 30 JVM tests,
 debug build/lint and APK audit pass (1,383,104 bytes, minSdk21, no native libraries).
+
+## dev.30 increment
+
+Native Media file screen, document consent, bounded upload/progress/cancel, accepted-file restoration and Stop. No capture/storage-wide permissions or native dependency added. Foreground-only upload; URL sending remains pending.
+Product milestones and deferred physical gates remain open.
