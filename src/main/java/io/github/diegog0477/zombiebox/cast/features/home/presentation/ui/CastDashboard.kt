@@ -105,11 +105,15 @@ class CastDashboard(
         )
         content.addView(header)
         content.addView(ui.label(R.string.cast_subtitle, 16f, ui.muted))
-        val modes = ui.row()
+        val modes = ui.segments()
         for ((index, label) in
             listOf(R.string.mode_screen, R.string.mode_media, R.string.mode_audio).withIndex()) {
             val button =
-                ui.action(context.getString(label), index == 0) {
+                ui.segment(
+                    context.getString(label),
+                    listOf(R.drawable.ic_screen, R.drawable.ic_media, R.drawable.ic_audio)[index],
+                    index == 0,
+                ) {
                     if (!sharing) {
                         if (index == 1) openMedia()
                         else
@@ -121,10 +125,7 @@ class CastDashboard(
                     }
                 }
             modeButtons.add(button)
-            modes.addView(
-                button,
-                LayoutParams(0, -2, 1f).apply { setMargins(0, ui.dp(12), ui.dp(4), ui.dp(16)) },
-            )
+            modes.addView(button, LayoutParams(0, -2, 1f))
         }
 
         home.addView(modes)
@@ -244,9 +245,7 @@ class CastDashboard(
         start.setText(if (audioOnly) R.string.start_audio else R.string.start)
         for ((index, button) in modeButtons.withIndex()) {
             val selected = index == if (audioOnly) 2 else 0
-            button.isSelected = selected
-            button.background = ui.buttonBackground(selected)
-            button.setTextColor(if (selected) ui.background else ui.foreground)
+            ui.selectSegment(button, selected)
         }
     }
 

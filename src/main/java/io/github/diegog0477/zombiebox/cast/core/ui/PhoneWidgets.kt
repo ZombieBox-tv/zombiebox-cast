@@ -1,6 +1,7 @@
 package io.github.diegog0477.zombiebox.cast.core.ui
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
@@ -48,9 +49,7 @@ class PhoneWidgets(val context: Context) {
             isSelected = selected
             isAllCaps = false
             textSize = 15f
-            setTextColor(
-                if (selected) this@PhoneWidgets.background else this@PhoneWidgets.foreground
-            )
+            setTextColor(actionColors(selected))
             minHeight = dp(48)
             minimumHeight = dp(48)
             minimumWidth = 0
@@ -62,12 +61,55 @@ class PhoneWidgets(val context: Context) {
 
     fun buttonBackground(selected: Boolean) =
         StateListDrawable().apply {
+            addState(intArrayOf(-android.R.attr.state_enabled), shape(surface))
             addState(
                 intArrayOf(android.R.attr.state_focused),
                 shape(if (selected) accent else surface, accent),
             )
             addState(intArrayOf(android.R.attr.state_pressed), shape(accent))
             addState(intArrayOf(), shape(if (selected) accent else surface))
+        }
+
+    private fun actionColors(selected: Boolean) =
+        ColorStateList(
+            arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
+            intArrayOf(muted, if (selected) background else foreground),
+        )
+
+    fun segment(text: String, icon: Int, selected: Boolean, click: () -> Unit) =
+        action(text, selected, click).apply {
+            val drawable = context.getDrawable(icon)!!.mutate()
+            drawable.setBounds(0, 0, dp(20), dp(20))
+            setCompoundDrawables(drawable, null, null, null)
+            compoundDrawablePadding = dp(4)
+            selectSegment(this, selected)
+        }
+
+    fun selectSegment(button: Button, selected: Boolean) {
+        button.isSelected = selected
+        button.setTextColor(actionColors(selected))
+        button.compoundDrawables.filterNotNull().forEach { it.setTintList(actionColors(selected)) }
+        button.background =
+            StateListDrawable().apply {
+                addState(intArrayOf(-android.R.attr.state_enabled), shape(0))
+                addState(
+                    intArrayOf(android.R.attr.state_focused),
+                    shape(if (selected) accent else surface, accent),
+                )
+                addState(intArrayOf(android.R.attr.state_pressed), shape(surface, accent))
+                addState(intArrayOf(), shape(if (selected) accent else 0))
+            }
+    }
+
+    fun segments() =
+        row().apply {
+            background = shape(surface)
+            setPadding(dp(4), dp(4), dp(4), dp(4))
+            layoutParams =
+                LinearLayout.LayoutParams(-1, -2).apply {
+                    topMargin = dp(12)
+                    bottomMargin = dp(16)
+                }
         }
 
     fun navigation(text: String, selected: Boolean, icon: Int, click: () -> Unit) =

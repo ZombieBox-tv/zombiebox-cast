@@ -142,3 +142,8 @@ Product milestones and deferred physical gates remain open.
 
 Pins the additive native-inventory protocol; no Cast runtime or APK version change. Full visual finishing, sender/OEM and broader Media flows remain pending.
 Product milestone and physical/public distribution gates remain open.
+
+## dev.32 increment
+
+Screen/Media/Audio share a quiet segmented surface with original icons, a green selected fill and visible D-pad focus. Media has a compact header, file card and real upload progress; disabled actions lose the active fill. No screenshot-match or physical acceptance claim.
+Product milestones, physical validation and public distribution remain open.

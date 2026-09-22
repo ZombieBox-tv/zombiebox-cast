@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.Toast
 import io.github.diegog0477.zombiebox.cast.R
@@ -43,13 +46,26 @@ class MediaActivity : Activity() {
             )
         val ui = PhoneWidgets(this)
         val content = ui.column().apply { setPadding(ui.dp(20), ui.dp(16), ui.dp(20), ui.dp(24)) }
-        content.addView(ui.action(getString(R.string.media_back)) { finish() })
-        content.addView(ui.label(R.string.media_title, 30f, ui.accent))
+        val header = ui.row()
+        header.addView(
+            ui.iconAction(R.drawable.ic_back, R.string.media_back) { finish() },
+            LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)),
+        )
+        header.addView(
+            ui.label(R.string.media_title, 30f, ui.accent),
+            LinearLayout.LayoutParams(0, -2, 1f),
+        )
+        content.addView(header)
         content.addView(ui.label(R.string.media_description, 16f, ui.muted))
-        val tabs = ui.row()
-        for (label in listOf(R.string.mode_screen, R.string.mode_media, R.string.mode_audio)) {
+        val tabs = ui.segments()
+        for ((index, label) in
+            listOf(R.string.mode_screen, R.string.mode_media, R.string.mode_audio).withIndex()) {
             tabs.addView(
-                ui.action(getString(label), label == R.string.mode_media) {
+                ui.segment(
+                    getString(label),
+                    listOf(R.drawable.ic_screen, R.drawable.ic_media, R.drawable.ic_audio)[index],
+                    label == R.string.mode_media,
+                ) {
                     if (!model.busy && label != R.string.mode_media) {
                         setResult(
                             RESULT_OK,
@@ -69,15 +85,44 @@ class MediaActivity : Activity() {
         val card = ui.card()
         val document = ui.label(R.string.media_choose, 22f)
         val detail = ui.label(R.string.media_empty, 16f, ui.muted)
-        card.addView(document)
+        val fileRow = ui.row()
+        fileRow.addView(
+            ImageView(this).apply {
+                setImageDrawable(
+                    getDrawable(R.drawable.ic_media)?.mutate()?.apply { setTint(ui.accent) }
+                )
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                setPadding(ui.dp(12), ui.dp(12), ui.dp(12), ui.dp(12))
+            },
+            LinearLayout.LayoutParams(ui.dp(64), ui.dp(72)),
+        )
+        fileRow.addView(document, LinearLayout.LayoutParams(0, -2, 1f))
+        card.addView(fileRow)
         card.addView(detail)
+        val progress =
+            ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progressTintList = android.content.res.ColorStateList.valueOf(ui.accent)
+                indeterminateTintList = android.content.res.ColorStateList.valueOf(ui.accent)
+                visibility = View.GONE
+            }
+        card.addView(progress, LinearLayout.LayoutParams(-1, ui.dp(12)))
         content.addView(card)
         val choose = ui.action(getString(R.string.media_choose)) { chooseDocument() }
         val send = ui.action(getString(R.string.media_send), true) { model.send() }
         val stop = ui.action(getString(R.string.media_cancel)) { model.stop() }
-        content.addView(choose)
+        content.addView(
+            choose,
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(12) },
+        )
         content.addView(send, LinearLayout.LayoutParams(-1, ui.dp(60)))
-        content.addView(stop)
+        content.addView(
+            stop,
+            LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = ui.dp(12)
+                bottomMargin = ui.dp(12)
+            },
+        )
         content.addView(ui.label(R.string.media_limits, 15f, ui.muted))
         val scroll =
             ScrollView(this).apply {
@@ -112,6 +157,13 @@ class MediaActivity : Activity() {
                         getString(R.string.media_selected, (state.document?.bytes ?: 0) / 1048576.0)
                     else -> getString(R.string.media_empty)
                 }
+            progress.visibility =
+                if (state.phase in listOf("READING", "SENDING", "STOPPING")) View.VISIBLE
+                else View.GONE
+            progress.isIndeterminate = state.phase != "SENDING"
+            progress.progress = state.percent.coerceIn(0, 100)
+            progress.contentDescription = detail.text
+            for (index in 0 until tabs.childCount) tabs.getChildAt(index).isEnabled = !model.busy
             choose.isEnabled = !model.busy && state.phase != "ACCEPTED"
             send.isEnabled =
                 !model.busy && state.document?.supportedSize == true && state.phase == "READY"
