@@ -12,7 +12,9 @@ import android.widget.ScrollView
 import android.widget.Toast
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.core.ui.PhoneWidgets
+import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
 import io.github.diegog0477.zombiebox.cast.features.media.data.GatewayMediaRepository
+import io.github.diegog0477.zombiebox.cast.features.media.platform.SharedDocument
 import io.github.diegog0477.zombiebox.cast.features.media.presentation.viewmodel.MediaViewModel
 import java.util.concurrent.Executors
 
@@ -25,9 +27,22 @@ class MediaActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val shared = if (intent.action == Intent.ACTION_SEND) SharedDocument.read(intent) else null
+        if (
+            (intent.action != null && intent.action != Intent.ACTION_SEND) ||
+                (intent.action == Intent.ACTION_SEND && shared == null) ||
+                ProjectionService.active
+        ) {
+            Toast.makeText(this, R.string.media_share_rejected, Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
         val prefs = getSharedPreferences("cast", MODE_PRIVATE)
         if (!prefs.getBoolean("companion", false)) {
             Toast.makeText(this, R.string.pair_prompt, Toast.LENGTH_LONG).show()
+            startActivity(
+                Intent(this, io.github.diegog0477.zombiebox.cast.CastActivity::class.java)
+            )
             finish()
             return
         }
@@ -57,6 +72,17 @@ class MediaActivity : Activity() {
         )
         content.addView(header)
         content.addView(ui.label(R.string.media_description, 16f, ui.muted))
+        content.addView(
+            ui.label(R.string.media_target, 17f, ui.accent).apply {
+                text =
+                    getString(
+                        R.string.media_target,
+                        prefs.getString("targetName", "")?.takeIf { it.isNotBlank() }?.take(120)
+                            ?: prefs.getString("device", "").orEmpty().take(80),
+                    )
+            }
+        )
+        content.addView(ui.label(R.string.media_target_confirmation, 15f, ui.muted))
         val tabs = ui.segments()
         for ((index, label) in
             listOf(R.string.mode_screen, R.string.mode_media, R.string.mode_audio).withIndex()) {
@@ -164,7 +190,7 @@ class MediaActivity : Activity() {
             progress.progress = state.percent.coerceIn(0, 100)
             progress.contentDescription = detail.text
             for (index in 0 until tabs.childCount) tabs.getChildAt(index).isEnabled = !model.busy
-            choose.isEnabled = !model.busy && state.phase != "ACCEPTED"
+            choose.isEnabled = !model.busy && state.phase !in listOf("ACCEPTED", "STOP_FAILED")
             send.isEnabled =
                 !model.busy && state.document?.supportedSize == true && state.phase == "READY"
             stop.isEnabled = state.phase in listOf("SENDING", "ACCEPTED", "FAILED", "STOP_FAILED")
@@ -172,7 +198,7 @@ class MediaActivity : Activity() {
                 if (state.phase == "ACCEPTED") R.string.media_stop else R.string.media_cancel
             )
         }
-        model.restore()
+        model.restore(shared)
     }
 
     private fun chooseDocument() {

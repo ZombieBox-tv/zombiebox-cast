@@ -147,3 +147,7 @@ Product milestone and physical/public distribution gates remain open.
 
 Screen/Media/Audio share a quiet segmented surface with original icons, a green selected fill and visible D-pad focus. Media has a compact header, file card and real upload progress; disabled actions lose the active fill. No screenshot-match or physical acceptance claim.
 Product milestones, physical validation and public distribution remain open.
+
+## dev.33 increment
+
+Single local audio/video file intake through Android Sharesheet, bounded consented staging and explicit Send; accepted TV media is preserved, ambiguous inputs rejected and failed Stop prevents replacement. VersionCode 33. URL/queue/background transfer and physical acceptance remain open.

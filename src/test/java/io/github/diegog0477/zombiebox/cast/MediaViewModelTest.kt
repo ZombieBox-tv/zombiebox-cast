@@ -13,6 +13,7 @@ class MediaViewModelTest {
         var cancels = 0
         var size = 42L
         var restored: String? = null
+        var failStop = false
 
         override fun restore() = restored
 
@@ -29,7 +30,48 @@ class MediaViewModelTest {
 
         override fun stop() {
             stops++
+            if (failStop) throw IllegalStateException("Offline")
         }
+    }
+
+    @Test
+    fun sharingStagesADocumentWithoutSendingOrReplacingAcceptedMedia() {
+        val repo = Repo()
+        val model = MediaViewModel(repo, { it() }, { it() })
+        model.restore("content://document/file")
+        assertEquals("READY", model.state.phase)
+        assertEquals(0, repo.sends)
+        model.send()
+        assertEquals(1, repo.sends)
+        repo.restored = "TV current file"
+        val reopened = MediaViewModel(repo, { it() }, { it() })
+        reopened.restore("content://document/new")
+        assertEquals("TV current file", reopened.state.document?.title)
+        assertEquals("ACCEPTED", reopened.state.phase)
+        reopened.send()
+        assertEquals(1, repo.sends)
+    }
+
+    @Test
+    fun failedStopPreventsAnUncertainReceiverFromBeingReplaced() {
+        val repo =
+            Repo().apply {
+                restored = "Current"
+                failStop = true
+            }
+        val model = MediaViewModel(repo, { it() }, { it() })
+        model.restore()
+        model.stop()
+        assertEquals("STOP_FAILED", model.state.phase)
+        model.select("content://new/file")
+        model.send()
+        assertEquals("Current", model.state.document?.title)
+        assertEquals(0, repo.sends)
+        repo.failStop = false
+        model.stop()
+        model.select("content://new/file")
+        model.send()
+        assertEquals(1, repo.sends)
     }
 
     @Test

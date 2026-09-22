@@ -25,7 +25,7 @@ class MediaViewModel(
     val busy
         get() = state.phase in listOf("READING", "SENDING", "STOPPING")
 
-    fun restore() {
+    fun restore(sharedLocator: String? = null) {
         if (closed || busy) return
         val request = ++generation
         update(State(phase = "READING"))
@@ -33,7 +33,12 @@ class MediaViewModel(
             val result =
                 try {
                     val title = repository.restore()
-                    if (title == null) State() else State(MediaDocument("", title, 0), "ACCEPTED")
+                    if (title != null) State(MediaDocument("", title, 0), "ACCEPTED")
+                    else if (sharedLocator == null) State()
+                    else {
+                        val document = repository.inspect(sharedLocator)
+                        State(document, if (document.supportedSize) "READY" else "SIZE")
+                    }
                 } catch (_: Exception) {
                     State(phase = "FAILED")
                 }
@@ -42,7 +47,7 @@ class MediaViewModel(
     }
 
     fun select(locator: String) {
-        if (closed || busy || state.phase == "ACCEPTED") return
+        if (closed || busy || state.phase in listOf("ACCEPTED", "STOP_FAILED")) return
         val request = ++generation
         update(State(phase = "READING"))
         execute {
@@ -59,7 +64,7 @@ class MediaViewModel(
 
     fun send() {
         val document = state.document ?: return
-        if (closed || busy || !document.supportedSize || state.phase == "ACCEPTED") return
+        if (closed || busy || !document.supportedSize || state.phase != "READY") return
         val request = ++generation
         ownsTransfer = true
         update(state.copy(phase = "SENDING", percent = 0))

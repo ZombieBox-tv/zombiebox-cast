@@ -53,6 +53,7 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
                 .putString("trustedCompanions", values.toString())
                 .putString("gateway", profile.getString("gateway"))
                 .putString("device", profile.getString("id"))
+                .putString("targetName", status.grant.targetName)
                 .putString("token", profile.getString("token"))
                 .putBoolean("companion", true)
                 .commit()

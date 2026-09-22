@@ -211,4 +211,12 @@
     <string name="media_stopping">Stopping transfer or playback…</string>
     <string name="media_selected">Selected: %1$.1f MiB</string>
     <string name="media_picker_missing">No document picker is available on this phone.</string>
+    <string name="media_share_rejected">
+        Share one local audio or video file after stopping active capture.
+    </string>
+    <string name="media_target_confirmation">
+        Send uses your selected paired TV. Review the target in Devices first. Sharing selects a
+        file; tap Send to start. Stop existing TV media before selecting another file.
+    </string>
+    <string name="media_target">Target: %1$s</string>
 </resources>

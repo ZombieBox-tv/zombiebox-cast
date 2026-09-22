@@ -225,4 +225,13 @@
     <string name="media_picker_missing">
         No hay selector de documentos disponible en este teléfono.
     </string>
+    <string name="media_share_rejected">
+        Comparte un archivo local de audio o video después de detener la captura activa.
+    </string>
+    <string name="media_target_confirmation">
+        Enviar usa la TV emparejada seleccionada. Revisa el destino en Dispositivos. Compartir
+        selecciona un archivo; pulsa Enviar para iniciar. Detén el archivo actual de la TV antes de
+        seleccionar otro.
+    </string>
+    <string name="media_target">Destino: %1$s</string>
 </resources>
