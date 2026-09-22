@@ -1,5 +1,6 @@
 package io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGrant
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.repository.CastRepository
 
@@ -48,9 +49,9 @@ class CastViewModel(
         )
     }
 
-    fun start() {
+    fun start(mode: CaptureMode = CaptureMode.SCREEN) {
         if (state.selected.isNotEmpty())
-            work { previous -> previous.copy(grant = repository.create(previous.selected)) }
+            work { previous -> previous.copy(grant = repository.create(previous.selected, mode)) }
     }
 
     fun consumeGrant() {

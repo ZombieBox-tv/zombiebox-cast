@@ -10,6 +10,7 @@ import android.os.*
 import android.util.Base64
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureOrientation
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.transport.RtspPublisher
@@ -37,7 +38,8 @@ class ProjectionService : Service() {
 
     private var encoderStarted = false
     private var shareAudio = false
-    @Volatile private var encoder: ProjectionEncoder? = null
+    private var mode = CaptureMode.SCREEN
+    @Volatile private var encoder: CaptureEncoder? = null
     @Volatile private var captureSize = Pair(1, 1)
     private var displayListener: DisplayManager.DisplayListener? = null
     private lateinit var publisherFactory: () -> RtspPublisher
@@ -81,11 +83,15 @@ class ProjectionService : Service() {
                     it.name == intent.getStringExtra("orientation")
                 } ?: CaptureOrientation.AUTO)
                 .effective(Build.VERSION.SDK_INT)
-        shareAudio = intent.getBooleanExtra("audio", false)
+        mode =
+            CaptureMode.values().firstOrNull { it.name == intent.getStringExtra("captureMode") }
+                ?: CaptureMode.SCREEN
+        shareAudio = mode == CaptureMode.AUDIO || intent.getBooleanExtra("audio", false)
         keyFrameSeconds = intent.getIntExtra("keyFrameSeconds", 2).coerceIn(1, 2)
         history = LocalHistoryStore.create(prefs)
-        historyId = history.begin(intent.getStringExtra("receiverName").orEmpty(), shareAudio)
+        historyId = history.begin(intent.getStringExtra("receiverName").orEmpty(), shareAudio, mode)
         try {
+            check(mode.supported(Build.VERSION.SDK_INT))
             videoProfile =
                 CastVideo(
                     intent.getIntExtra("maxWidth", 640),
@@ -139,7 +145,7 @@ class ProjectionService : Service() {
                 )
             }
             updateDisplaySize()
-            if (Build.VERSION.SDK_INT < 34) {
+            if (mode == CaptureMode.SCREEN && Build.VERSION.SDK_INT < 34) {
                 displayListener =
                     object : DisplayManager.DisplayListener {
                         override fun onDisplayAdded(id: Int) {}
@@ -181,40 +187,52 @@ class ProjectionService : Service() {
         val waitingSince = AtomicLong(SystemClock.elapsedRealtime())
         var lastLease = SystemClock.elapsedRealtime()
         try {
-            val capture =
-                ProjectionEncoder(
-                    projection,
-                    videoProfile,
-                    keyFrameSeconds,
-                    orientation,
-                    SurfaceEncoderFactory(),
-                    { width, height, fps ->
-                        history.video(historyId, width, height, fps)
-                        prefs
-                            .edit()
-                            .putInt("videoWidth", width)
-                            .putInt("videoHeight", height)
-                            .putInt("videoFps", fps)
-                            .apply()
-                    },
-                    resources.displayMetrics.densityDpi,
-                    { captureSize },
-                    publisherFactory,
-                    shareAudio,
-                    { running },
-                    { value ->
-                        ready.set(false)
-                        waitingSince.set(SystemClock.elapsedRealtime())
-                        SessionPhase.values().firstOrNull { it.name == value }?.let(::recordPhase)
-                        prefs.edit().putString("status", value).apply()
-                    },
-                    { value ->
-                        SessionAudio.values()
-                            .firstOrNull { it.name == value }
-                            ?.let { history.audio(historyId, it) }
-                        prefs.edit().putString("audioStatus", value).apply()
-                    },
-                )
+            val captureState: (String) -> Unit = { value ->
+                ready.set(false)
+                waitingSince.set(SystemClock.elapsedRealtime())
+                SessionPhase.values().firstOrNull { it.name == value }?.let(::recordPhase)
+                prefs.edit().putString("status", value).apply()
+            }
+            val captureAudioState: (String) -> Unit = { value ->
+                SessionAudio.values()
+                    .firstOrNull { it.name == value }
+                    ?.let { history.audio(historyId, it) }
+                prefs.edit().putString("audioStatus", value).apply()
+            }
+            val capture: CaptureEncoder =
+                if (mode == CaptureMode.AUDIO)
+                    AudioProjectionEncoder(
+                        projection,
+                        { PlaybackAudioFactory.create(Build.VERSION.SDK_INT, true) },
+                        publisherFactory,
+                        { running },
+                        captureState,
+                        captureAudioState,
+                    )
+                else
+                    ProjectionEncoder(
+                        projection,
+                        videoProfile,
+                        keyFrameSeconds,
+                        orientation,
+                        SurfaceEncoderFactory(),
+                        { width, height, fps ->
+                            history.video(historyId, width, height, fps)
+                            prefs
+                                .edit()
+                                .putInt("videoWidth", width)
+                                .putInt("videoHeight", height)
+                                .putInt("videoFps", fps)
+                                .apply()
+                        },
+                        resources.displayMetrics.densityDpi,
+                        { captureSize },
+                        publisherFactory,
+                        shareAudio,
+                        { running },
+                        captureState,
+                        captureAudioState,
+                    )
             encoder = capture
             heartbeat.scheduleWithFixedDelay(
                 {
@@ -294,7 +312,11 @@ class ProjectionService : Service() {
         return builder
             .setSmallIcon(android.R.drawable.ic_menu_share)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.sharing))
+            .setContentText(
+                getString(
+                    if (mode == CaptureMode.AUDIO) R.string.audio_sharing else R.string.sharing
+                )
+            )
             .setOngoing(true)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,

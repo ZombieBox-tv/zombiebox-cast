@@ -9,6 +9,7 @@ import android.os.Handler
 import android.widget.*
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
 import io.github.diegog0477.zombiebox.cast.features.casting.data.LocalCapturePreferences
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CapturePreferencesViewModel
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CastViewModel
@@ -59,7 +60,10 @@ class CastActivity : Activity() {
             if (key == "status" && ::status.isInitialized) {
                 status.setText(
                     when (preferences.getString("status", "")) {
-                        "SHARING" -> R.string.sharing
+                        "SHARING" ->
+                            if (capturePreferences.state.mode == CaptureMode.AUDIO)
+                                R.string.audio_sharing
+                            else R.string.sharing
                         "BUFFERING" -> R.string.buffering
                         "RECOVERING" -> R.string.recovering
                         "FAILED" -> R.string.failed
@@ -78,7 +82,8 @@ class CastActivity : Activity() {
                         model.state.selected.isNotEmpty() &&
                         !ProjectionService.active &&
                         !capturePending &&
-                        repository.paired
+                        repository.paired &&
+                        capturePreferences.state.mode.supported(Build.VERSION.SDK_INT)
             }
         }
     private var receiverKey = ""
@@ -109,13 +114,16 @@ class CastActivity : Activity() {
                 capturePending ||
                 model.state.busy ||
                 !repository.paired ||
-                model.state.selected.isEmpty()
+                model.state.selected.isEmpty() ||
+                !capturePreferences.state.mode.supported(Build.VERSION.SDK_INT)
         )
             return
         capturePending = true
         capturePreferences.lock(true)
         dashboard.sharing(false, true)
-        shareAudio = audio.isChecked && Build.VERSION.SDK_INT >= 29
+        shareAudio =
+            (capturePreferences.state.mode == CaptureMode.AUDIO || audio.isChecked) &&
+                Build.VERSION.SDK_INT >= 29
         if (
             Build.VERSION.SDK_INT >= 29 &&
                 shareAudio &&
@@ -187,7 +195,18 @@ class CastActivity : Activity() {
             )
         history.observer = dashboard::renderHistory
         history.refresh()
-        capturePreferences.observer = dashboard::renderPreferences
+        capturePreferences.observer = { value ->
+            dashboard.renderPreferences(value)
+            if (::audioStatus.isInitialized) renderAudioStatus()
+            if (::start.isInitialized)
+                start.isEnabled =
+                    !model.state.busy &&
+                        !capturePending &&
+                        !ProjectionService.active &&
+                        repository.paired &&
+                        model.state.selected.isNotEmpty() &&
+                        value.mode.supported(Build.VERSION.SDK_INT)
+        }
         dashboard.restoreNavigation(saved)
         status = dashboard.status
         audioStatus = dashboard.audioStatus
@@ -244,10 +263,13 @@ class CastActivity : Activity() {
                     state.selected.isNotEmpty() &&
                     !ProjectionService.active &&
                     !capturePending &&
-                    repository.paired
+                    repository.paired &&
+                    capturePreferences.state.mode.supported(Build.VERSION.SDK_INT)
             status.setText(
-                if (ProjectionService.active) R.string.sharing
-                else if (state.failed) R.string.failed
+                if (ProjectionService.active) {
+                    if (capturePreferences.state.mode == CaptureMode.AUDIO) R.string.audio_sharing
+                    else R.string.sharing
+                } else if (state.failed) R.string.failed
                 else if (state.busy) R.string.connecting
                 else if (state.receivers.isEmpty()) R.string.no_receivers else R.string.ready
             )
@@ -265,6 +287,7 @@ class CastActivity : Activity() {
                     val intent =
                         Intent(this, ProjectionService::class.java)
                             .putExtra("audio", shareAudio)
+                            .putExtra("captureMode", grant.mode.name)
                             .putExtra("consent", permission)
                             .putExtra("castId", grant.id)
                             .putExtra(
@@ -306,7 +329,8 @@ class CastActivity : Activity() {
                     }
             }
             if (state.failed || (!state.busy && state.selected.isEmpty())) consent = null
-            if (consent != null && !state.busy && state.grant == null) model.start()
+            if (consent != null && !state.busy && state.grant == null)
+                model.start(capturePreferences.state.mode)
         }
         if (repository.paired && !capturePending) model.refresh()
         else if (!repository.paired) discoveryModel.refresh()
@@ -317,7 +341,10 @@ class CastActivity : Activity() {
             when (getSharedPreferences("cast", MODE_PRIVATE).getString("audioStatus", "DISABLED")) {
                 "CAPTURING" -> R.string.audio_capturing
                 "SILENT" -> R.string.audio_silent
-                "UNAVAILABLE" -> R.string.audio_unavailable
+                "UNAVAILABLE" ->
+                    if (capturePreferences.state.mode == CaptureMode.AUDIO)
+                        R.string.audio_only_unavailable
+                    else R.string.audio_unavailable
                 "WAITING" -> R.string.audio_waiting
                 else -> R.string.audio_disabled
             }
@@ -341,7 +368,17 @@ class CastActivity : Activity() {
         if (request == 102) {
             shareAudio =
                 results.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED
-            captureConsent()
+            if (!shareAudio && capturePreferences.state.mode == CaptureMode.AUDIO) {
+                capturePending = false
+                dashboard.sharing(false)
+                capturePreferences.lock(false)
+                start.isEnabled =
+                    !model.state.busy &&
+                        repository.paired &&
+                        model.state.selected.isNotEmpty() &&
+                        !ProjectionService.active
+                Toast.makeText(this, R.string.audio_permission_required, Toast.LENGTH_LONG).show()
+            } else captureConsent()
         }
     }
 
@@ -383,7 +420,7 @@ class CastActivity : Activity() {
             dashboard.sharing(ProjectionService.active)
             if (result == RESULT_OK && data != null) {
                 consent = data
-                if (!model.state.busy) model.start()
+                if (!model.state.busy) model.start(capturePreferences.state.mode)
             }
         }
     }

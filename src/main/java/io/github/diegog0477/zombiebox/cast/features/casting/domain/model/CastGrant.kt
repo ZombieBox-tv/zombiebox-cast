@@ -8,6 +8,7 @@ data class CastGrant(
     val user: String,
     val token: String,
     val video: CastVideo = CastVideo(),
+    val mode: CaptureMode = CaptureMode.SCREEN,
 )
 
 /** Provider-neutral, bounded encoder budget negotiated for the receiver. */

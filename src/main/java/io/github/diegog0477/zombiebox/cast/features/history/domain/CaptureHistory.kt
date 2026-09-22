@@ -1,5 +1,6 @@
 package io.github.diegog0477.zombiebox.cast.features.history.domain
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.history.domain.model.*
 import io.github.diegog0477.zombiebox.cast.features.history.domain.repository.*
 
@@ -22,7 +23,11 @@ class CaptureHistory(
 
     override fun sessions() = normalize(store.read()).take(LIMIT)
 
-    fun begin(receiver: String, audioRequested: Boolean): String {
+    fun begin(
+        receiver: String,
+        audioRequested: Boolean,
+        mode: CaptureMode = CaptureMode.SCREEN,
+    ): String {
         val id = newId()
         val session =
             CaptureSession(
@@ -30,6 +35,7 @@ class CaptureHistory(
                 processId,
                 receiver.take(120),
                 now(),
+                mode = mode,
                 audio = if (audioRequested) SessionAudio.WAITING else SessionAudio.DISABLED,
             )
         store.update { (listOf(session) + normalize(it)).take(LIMIT) }

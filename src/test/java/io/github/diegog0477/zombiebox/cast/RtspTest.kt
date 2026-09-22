@@ -11,6 +11,81 @@ import org.junit.Test
 
 class RtspTest {
     @Test
+    fun audioOnlyUsesOneTrackNoVideoAndKeepsTheSessionAlive() {
+        val listener = ServerSocket(0)
+        val executor = Executors.newSingleThreadExecutor()
+        var clock = 0L
+        val future =
+            executor.submit<Boolean> {
+                listener.accept().use { socket ->
+                    socket.soTimeout = 3000
+                    val input = DataInputStream(socket.getInputStream())
+                    val output = socket.getOutputStream()
+                    for (method in listOf("ANNOUNCE", "SETUP", "RECORD", "OPTIONS")) {
+                        if (method == "OPTIONS") {
+                            assertEquals(36, input.readUnsignedByte())
+                            assertEquals(0, input.readUnsignedByte())
+                            val packet = ByteArray(input.readUnsignedShort())
+                            input.readFully(packet)
+                            assertEquals(97, packet[1].toInt() and 127)
+                        }
+                        val line = input.readLine()
+                        assertTrue(line.startsWith("$method "))
+                        val headers = mutableMapOf<String, String>()
+                        while (true) {
+                            val header = input.readLine()
+                            if (header.isEmpty()) break
+                            headers[header.substringBefore(':').lowercase()] =
+                                header.substringAfter(':').trim()
+                        }
+                        assertEquals("Basic test", headers["authorization"])
+                        val body = ByteArray(headers.getValue("content-length").toInt())
+                        input.readFully(body)
+                        if (method == "ANNOUNCE") {
+                            assertTrue(String(body).contains("m=audio"))
+                            assertFalse(String(body).contains("m=video"))
+                            assertFalse(String(body).contains("H264"))
+                            assertFalse(String(body).contains("trackID=1"))
+                        }
+                        if (method == "SETUP") {
+                            assertTrue(line.contains("/trackID=0 "))
+                            assertTrue(headers.getValue("transport").contains("interleaved=0-1"))
+                        }
+                        output.write(
+                            "RTSP/1.0 200 OK\r\nCSeq: ${headers.getValue("cseq")}\r\nSession: audio\r\nContent-Length: 0\r\n\r\n"
+                                .toByteArray()
+                        )
+                        output.flush()
+                    }
+                    true
+                }
+            }
+        val publisher =
+            RtspPublisher(
+                "127.0.0.1",
+                listener.localPort,
+                "zombie/" + "b".repeat(32),
+                "Basic test",
+                { clock },
+            )
+        try {
+            publisher.connectAudio()
+            try {
+                publisher.frame(listOf(byteArrayOf(0x65)), 0)
+                fail("audio mode sent video")
+            } catch (_: IllegalStateException) {}
+            clock = 16000000000L
+            publisher.audio(byteArrayOf(1, 2, 3), 1000000)
+            assertEquals(clock, publisher.lastMediaNanos)
+            assertTrue(future.get(5, TimeUnit.SECONDS))
+        } finally {
+            publisher.close()
+            listener.close()
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
     fun publishesVideoAndAudioOverAuthenticatedInterleavedTracks() {
         val listener = ServerSocket(0)
         val executor = Executors.newSingleThreadExecutor()

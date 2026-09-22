@@ -6,6 +6,7 @@ import android.widget.LinearLayout
 import android.widget.Switch
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.core.ui.PhoneWidgets
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureOrientation
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CapturePreferences
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureQuality
@@ -25,6 +26,7 @@ class CaptureOptions(context: Context, private val change: (CapturePreferences) 
             }
         }
     val audioStatus = ui.label(R.string.audio_disabled, 14f, ui.muted)
+    private val videoControls = ui.column()
     private val quality = ui.row()
     private val framing = ui.row()
     private val latency =
@@ -43,12 +45,12 @@ class CaptureOptions(context: Context, private val change: (CapturePreferences) 
         setPadding(ui.dp(16), ui.dp(12), ui.dp(16), ui.dp(12))
         addView(audio, LayoutParams(-1, -2))
         addView(audioStatus)
-        addView(ui.label(R.string.video_quality))
-        addView(quality)
-        addView(ui.label(R.string.quality_limit, 14f, ui.muted))
-        addView(ui.label(R.string.orientation_title))
-        addView(framing)
-        addView(
+        videoControls.addView(ui.label(R.string.video_quality))
+        videoControls.addView(quality)
+        videoControls.addView(ui.label(R.string.quality_limit, 14f, ui.muted))
+        videoControls.addView(ui.label(R.string.orientation_title))
+        videoControls.addView(framing)
+        videoControls.addView(
             ui.label(
                 if (Build.VERSION.SDK_INT >= 32) R.string.orientation_detail
                 else R.string.orientation_legacy,
@@ -56,13 +58,16 @@ class CaptureOptions(context: Context, private val change: (CapturePreferences) 
                 ui.muted,
             )
         )
-        addView(latency, LayoutParams(-1, -2))
-        addView(ui.label(R.string.low_latency_detail, 14f, ui.muted))
+        videoControls.addView(latency, LayoutParams(-1, -2))
+        videoControls.addView(ui.label(R.string.low_latency_detail, 14f, ui.muted))
+        addView(videoControls)
         render(current)
     }
 
     fun render(value: CapturePreferences) {
         current = value
+        videoControls.visibility = if (value.mode == CaptureMode.AUDIO) GONE else VISIBLE
+        audio.visibility = if (value.mode == CaptureMode.AUDIO) GONE else VISIBLE
         rendering = true
         audio.isChecked = value.audio
         latency.isChecked = value.lowLatency

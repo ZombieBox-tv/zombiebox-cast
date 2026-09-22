@@ -1,6 +1,7 @@
 package io.github.diegog0477.zombiebox.cast.features.casting.data
 
 import android.content.SharedPreferences
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureOrientation
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CapturePreferences
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureQuality
@@ -10,6 +11,10 @@ class LocalCapturePreferences(private val preferences: SharedPreferences) :
     CapturePreferencesRepository {
     override fun load() =
         CapturePreferences(
+            mode =
+                CaptureMode.values().firstOrNull {
+                    it.name == preferences.getString("captureMode", "SCREEN")
+                } ?: CaptureMode.SCREEN,
             quality =
                 CaptureQuality.values().firstOrNull {
                     it.name == preferences.getString("captureQuality", "AUTO")
@@ -25,6 +30,7 @@ class LocalCapturePreferences(private val preferences: SharedPreferences) :
     override fun save(value: CapturePreferences) {
         preferences
             .edit()
+            .putString("captureMode", value.mode.name)
             .putString("captureQuality", value.quality.name)
             .putString("captureOrientation", value.orientation.name)
             .putBoolean("captureLowLatency", value.lowLatency)

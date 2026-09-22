@@ -30,17 +30,17 @@ class ProjectionEncoder(
     private val alive: () -> Boolean,
     private val state: (String) -> Unit,
     private val audioState: (String) -> Unit,
-) {
+) : CaptureEncoder {
     @Volatile private var publisher: RtspPublisher? = null
     private var display: VirtualDisplay? = null
     private var audioDisabled = false
     @Volatile private var lastProgress = SystemClock.elapsedRealtime()
 
-    fun checkProgress() {
+    override fun checkProgress() {
         if (SystemClock.elapsedRealtime() - lastProgress > 20000) interrupt()
     }
 
-    fun run() {
+    override fun run() {
         var failures = 0
         try {
             while (alive()) {
@@ -69,7 +69,7 @@ class ProjectionEncoder(
         }
     }
 
-    fun interrupt() {
+    override fun interrupt() {
         publisher?.close()
     }
 

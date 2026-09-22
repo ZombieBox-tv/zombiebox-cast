@@ -12,6 +12,7 @@ class RtspPublisher(
     private val port: Int,
     private val path: String,
     private val authorization: String,
+    private val nanoTime: () -> Long = System::nanoTime,
 ) {
     private val socket = Socket()
     private lateinit var input: BufferedInputStream
@@ -22,6 +23,12 @@ class RtspPublisher(
     private val rtp = RtpH264(java.util.Random().nextInt())
     private val aac = RtpAac(java.util.Random().nextInt())
     private var audioEnabled = false
+    private var videoEnabled = false
+    private var audioChannel = 2
+    @Volatile
+    var lastMediaNanos = nanoTime()
+        private set
+
     private var lastKeepAlive = 0L
 
     fun connect(
@@ -30,39 +37,62 @@ class RtspPublisher(
         audio: Boolean = false,
         base64: (ByteArray) -> String,
     ) {
+        require(sps.size >= 4 && pps.isNotEmpty())
+        val profile = sps.drop(1).take(3).joinToString("") { "%02x".format(it.toInt() and 255) }
+        val video =
+            "m=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=fmtp:96 packetization-mode=1;profile-level-id=$profile;sprop-parameter-sets=${base64(sps)},${base64(pps)}\r\na=control:trackID=0\r\n"
+        connectTracks(video + if (audio) audioDescription(1) else "", true, audio)
+    }
+
+    fun connectAudio() = connectTracks(audioDescription(0), false, true)
+
+    private fun audioDescription(track: Int) =
+        "m=audio 0 RTP/AVP 97\r\na=rtpmap:97 MPEG4-GENERIC/44100/2\r\na=fmtp:97 streamtype=5;profile-level-id=1;mode=AAC-hbr;config=1210;SizeLength=13;IndexLength=3;IndexDeltaLength=3\r\na=control:trackID=$track\r\n"
+
+    private fun connectTracks(tracks: String, video: Boolean, audio: Boolean) {
         require(path.matches(Regex("zombie/[a-f0-9]{32}")))
         socket.connect(InetSocketAddress(host, port), 5000)
         socket.soTimeout = 5000
         socket.tcpNoDelay = true
         input = BufferedInputStream(socket.getInputStream())
         output = BufferedOutputStream(socket.getOutputStream())
-        val profile = sps.drop(1).take(3).joinToString("") { "%02x".format(it.toInt() and 255) }
         audioEnabled = audio
+        videoEnabled = video
+        audioChannel = if (video) 2 else 0
         val sdp =
-            "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=Zombie Cast\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\na=control:*\r\nm=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=fmtp:96 packetization-mode=1;profile-level-id=$profile;sprop-parameter-sets=${base64(sps)},${base64(pps)}\r\na=control:trackID=0\r\n" +
-                if (audio)
-                    "m=audio 0 RTP/AVP 97\r\na=rtpmap:97 MPEG4-GENERIC/44100/2\r\na=fmtp:97 streamtype=5;profile-level-id=1;mode=AAC-hbr;config=1210;SizeLength=13;IndexLength=3;IndexDeltaLength=3\r\na=control:trackID=1\r\n"
-                else ""
+            "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=Zombie Cast\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\na=control:*\r\n" +
+                tracks
         request("ANNOUNCE", uri, mapOf("Content-Type" to "application/sdp"), sdp)
-        val headers =
-            request(
-                "SETUP",
-                "$uri/trackID=0",
-                mapOf("Transport" to "RTP/AVP/TCP;unicast;interleaved=0-1;mode=record"),
-            )
-        session = headers["session"]?.substringBefore(';') ?: error("RTSP session missing")
-        if (audio)
-            request(
-                "SETUP",
-                "$uri/trackID=1",
-                mapOf("Transport" to "RTP/AVP/TCP;unicast;interleaved=2-3;mode=record"),
-            )
+        val count = (if (video) 1 else 0) + (if (audio) 1 else 0)
+        repeat(count) { track ->
+            val channel = track * 2
+            val headers =
+                request(
+                    "SETUP",
+                    "$uri/trackID=$track",
+                    mapOf(
+                        "Transport" to
+                            "RTP/AVP/TCP;unicast;interleaved=$channel-${channel + 1};mode=record"
+                    ),
+                )
+            if (track == 0)
+                session = headers["session"]?.substringBefore(';') ?: error("RTSP session missing")
+        }
         request("RECORD", uri)
-        lastKeepAlive = System.currentTimeMillis()
+        lastKeepAlive = nanoTime()
+        lastMediaNanos = lastKeepAlive
+    }
+
+    private fun keepAlive() {
+        if (nanoTime() - lastKeepAlive > 15000000000L) {
+            request("OPTIONS", uri)
+            lastKeepAlive = nanoTime()
+        }
     }
 
     @Synchronized
     fun frame(nals: List<ByteArray>, presentationUs: Long) {
+        check(videoEnabled)
         for ((index, nal) in nals.withIndex()) for (packet in
             rtp.packets(nal, presentationUs * 90 / 1000, index == nals.lastIndex)) {
             output.write(36)
@@ -72,10 +102,8 @@ class RtspPublisher(
             output.write(packet)
         }
         output.flush()
-        if (System.currentTimeMillis() - lastKeepAlive > 15000) {
-            request("OPTIONS", uri)
-            lastKeepAlive = System.currentTimeMillis()
-        }
+        lastMediaNanos = nanoTime()
+        keepAlive()
     }
 
     @Synchronized
@@ -83,11 +111,13 @@ class RtspPublisher(
         check(audioEnabled)
         val packet = aac.packet(frame, presentationUs * 44100 / 1000000)
         output.write(36)
-        output.write(2)
+        output.write(audioChannel)
         output.write(packet.size shr 8)
         output.write(packet.size and 255)
         output.write(packet)
         output.flush()
+        lastMediaNanos = nanoTime()
+        keepAlive()
     }
 
     private fun request(

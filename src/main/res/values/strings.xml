@@ -148,7 +148,7 @@
         captured content.
     </string>
     <string name="video_profile">Video profile · %1$d × %2$d · %3$d fps</string>
-    <string name="history_title">Mirroring sessions</string>
+    <string name="history_title">Sharing sessions</string>
     <string name="history_detail">
         Last 30 sessions on this phone. Format is encoder configuration; audio is its last observed
         state, not proof of TV playback.
@@ -157,10 +157,31 @@
     <string name="history_clear_confirm">
         Delete finished sessions from this phone? An active session will be kept.
     </string>
-    <string name="history_empty">Your mirroring sessions will appear here.</string>
+    <string name="history_empty">Your sharing sessions will appear here.</string>
     <string name="history_receiver">Receiver</string>
     <string name="history_interrupted">Interrupted — end time unknown</string>
     <string name="history_ended">Ended: %1$s</string>
     <string name="history_remote_title">Latest remote command</string>
     <string name="history_audio">Last audio state: %1$s</string>
+    <string name="audio_sharing">Sharing app audio</string>
+    <string name="start_audio">Start audio sharing</string>
+    <string name="audio_only_detail">
+        Share permitted audio from other apps. No screen video or microphone is sent. Android will
+        ask for capture permission.
+    </string>
+    <string name="audio_only_unsupported">
+        Audio-only sharing requires Android 10 or newer. Remote control remains available on this
+        phone.
+    </string>
+    <string name="audio_only_unavailable">
+        App audio unavailable. Audio sharing cannot continue.
+    </string>
+    <string name="audio_permission_required">
+        Audio permission is required for audio-only sharing.
+    </string>
+    <string name="media_pending">
+        Sending media files is not available yet. Use Screen for mirroring or Audio to share
+        permitted app audio.
+    </string>
+    <string name="this_phone_audio">Audio from this phone</string>
 </resources>

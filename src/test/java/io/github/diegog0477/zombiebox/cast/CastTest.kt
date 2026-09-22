@@ -1,5 +1,6 @@
 package io.github.diegog0477.zombiebox.cast
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGrant
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.repository.CastRepository
@@ -9,6 +10,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CastTest {
+    @Test
+    fun audioModeIsExplicitAndNeverAcceptsAnOldScreenGrant() {
+        assertFalse(CaptureMode.AUDIO.supported(28))
+        assertTrue(CaptureMode.AUDIO.supported(29))
+        assertTrue(CaptureMode.SCREEN.supported(21))
+        assertFalse(CaptureMode.AUDIO.acceptsGrant(""))
+        assertFalse(CaptureMode.AUDIO.acceptsGrant("SCREEN"))
+        assertTrue(CaptureMode.SCREEN.acceptsGrant(""))
+        assertTrue(CaptureMode.AUDIO.acceptsGrant("AUDIO"))
+        val model = CastViewModel(Repo(), { it() }, { it() })
+        model.select("tv")
+        model.start(CaptureMode.AUDIO)
+        assertEquals(CaptureMode.AUDIO, model.state.grant!!.mode)
+    }
+
     @Test
     fun fragmentsReassembleWithSequenceWrapAndSingleMarker() {
         val nal = ByteArray(5000) { (it % 251).toByte() }
@@ -47,8 +63,8 @@ class CastTest {
 
         override fun receivers() = listOf(Receiver("tv", "TV"))
 
-        override fun create(receiver: String) =
-            CastGrant("grant", "host", 8554, "path", "user", "token")
+        override fun create(receiver: String, mode: CaptureMode) =
+            CastGrant("grant", "host", 8554, "path", "user", "token", mode = mode)
 
         override fun stop(id: String) {
             stopped.add(id)

@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.*
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.core.ui.PhoneWidgets
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CapturePreferences
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.ui.CaptureOptions
@@ -30,10 +31,14 @@ class CastDashboard(
     private val selectTrusted: (String) -> Unit,
     forget: () -> Unit,
     preferences: CapturePreferences,
-    changePreferences: (CapturePreferences) -> Unit,
+    private val changePreferences: (CapturePreferences) -> Unit,
     clearHistory: () -> Unit,
 ) : LinearLayout(context) {
     private val ui = PhoneWidgets(context)
+    private var preferences = preferences
+    private val modeButtons = mutableListOf<Button>()
+    private val sourceTitle = ui.label(R.string.this_phone, 23f)
+    private val sourceDetail = ui.label(R.string.screen_detail, 16f, ui.muted)
     private val pages = ui.column()
     private val home = ui.column()
     private val devices = ui.column()
@@ -103,17 +108,29 @@ class CastDashboard(
         val modes = ui.row()
         for ((index, label) in
             listOf(R.string.mode_screen, R.string.mode_media, R.string.mode_audio).withIndex()) {
-            modes.addView(
+            val button =
                 ui.action(context.getString(label), index == 0) {
-                    if (index > 0)
-                        AlertDialog.Builder(context)
-                            .setMessage(R.string.mode_pending)
-                            .setPositiveButton(android.R.string.ok, null)
-                            .show()
-                },
+                    if (!sharing) {
+                        if (index == 1)
+                            AlertDialog.Builder(context)
+                                .setMessage(R.string.media_pending)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show()
+                        else
+                            changePreferences(
+                                this.preferences.copy(
+                                    mode = if (index == 2) CaptureMode.AUDIO else CaptureMode.SCREEN
+                                )
+                            )
+                    }
+                }
+            modeButtons.add(button)
+            modes.addView(
+                button,
                 LayoutParams(0, -2, 1f).apply { setMargins(0, ui.dp(12), ui.dp(4), ui.dp(16)) },
             )
         }
+
         home.addView(modes)
         val source = ui.card()
         val sourceRow = ui.row()
@@ -122,10 +139,10 @@ class CastDashboard(
             LayoutParams(ui.dp(88), ui.dp(156)).apply { marginEnd = ui.dp(16) },
         )
         val sourceText = ui.column()
-        sourceText.addView(ui.label(R.string.this_phone, 23f))
+        sourceText.addView(sourceTitle)
         sourceText.addView(status)
         sourceText.addView(videoDetail)
-        sourceText.addView(ui.label(R.string.screen_detail, 16f, ui.muted))
+        sourceText.addView(sourceDetail)
         sourceRow.addView(sourceText, LayoutParams(0, -2, 1f))
         source.addView(sourceRow)
         home.addView(source)
@@ -171,6 +188,7 @@ class CastDashboard(
         addView(scroll, LayoutParams(-1, 0, 1f))
         addView(navigation)
         showPage(0)
+        renderPreferences(preferences)
     }
 
     private fun showPage(index: Int) {
@@ -215,7 +233,26 @@ class CastDashboard(
         videoDetail.text = context.getString(R.string.video_profile, width, height, fps)
     }
 
-    fun renderPreferences(value: CapturePreferences) = options.render(value)
+    fun renderPreferences(value: CapturePreferences) {
+        preferences = value
+        options.render(value)
+        val audioOnly = value.mode == CaptureMode.AUDIO
+        sourceTitle.setText(if (audioOnly) R.string.this_phone_audio else R.string.this_phone)
+        sourceDetail.setText(
+            if (audioOnly) {
+                if (value.mode.supported(android.os.Build.VERSION.SDK_INT))
+                    R.string.audio_only_detail
+                else R.string.audio_only_unsupported
+            } else R.string.screen_detail
+        )
+        start.setText(if (audioOnly) R.string.start_audio else R.string.start)
+        for ((index, button) in modeButtons.withIndex()) {
+            val selected = index == if (audioOnly) 2 else 0
+            button.isSelected = selected
+            button.background = ui.buttonBackground(selected)
+            button.setTextColor(if (selected) ui.background else ui.foreground)
+        }
+    }
 
     fun saveNavigation(out: Bundle) {
         scrollPositions[page] = scroll.scrollY
@@ -288,6 +325,7 @@ class CastDashboard(
 
     fun sharing(active: Boolean, locked: Boolean = active) {
         sharing = locked
+        modeButtons.forEach { it.isEnabled = !locked }
         stop.visibility = if (active) View.VISIBLE else View.GONE
         options.lock(locked)
         pairButton.isEnabled = !locked

@@ -2,6 +2,7 @@ package io.github.diegog0477.zombiebox.cast.features.casting.data
 
 import android.content.SharedPreferences
 import android.os.Build
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGrant
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
@@ -131,16 +132,37 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
             }
     }
 
-    override fun create(receiver: String): CastGrant {
+    override fun create(receiver: String, mode: CaptureMode): CastGrant {
         val result =
             request(
                 "POST",
                 "/v1/cast",
                 JSONObject()
                     .put("receiverId", receiver)
+                    .put("mode", mode.name)
                     .put("replaceExisting", true)
                     .put("maxVideoHeight", 1080),
             )
+        val id = result.getString("castId")
+        try {
+            check(mode.acceptsGrant(result.optString("mode"))) {
+                "Gateway does not support the requested capture mode"
+            }
+            if (mode == CaptureMode.AUDIO) {
+                val audio = result.getJSONObject("audio")
+                check(
+                    audio.getString("codec") == "aac" &&
+                        audio.getInt("sampleRate") == 44100 &&
+                        audio.getInt("channels") == 2 &&
+                        audio.getInt("bitrate") == 128000
+                )
+            }
+        } catch (error: Exception) {
+            try {
+                stop(id)
+            } catch (_: Exception) {}
+            throw error
+        }
         val video = result.optJSONObject("video")
         return CastGrant(
             result.getString("castId"),
@@ -155,6 +177,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
                 video?.optInt("fps", 24) ?: 24,
                 video?.optInt("bitrate", 800000) ?: 800000,
             ),
+            mode,
         )
     }
 

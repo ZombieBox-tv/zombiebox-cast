@@ -42,3 +42,6 @@ truncated or corrupt history becomes empty without blocking the feature. Host te
 cover round trips, retention/clock changes, invalid input, recovery/failure,
 process recreation and clearing during active capture. Physical UI/service/process
 kill acceptance remains deferred.
+
+Dev.29: history codec version 2 adds Screen/Audio mode. Version 1 remains readable
+as Screen; Audio records have no configured video dimensions.

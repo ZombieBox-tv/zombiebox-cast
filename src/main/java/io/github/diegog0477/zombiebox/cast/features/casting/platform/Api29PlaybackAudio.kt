@@ -77,6 +77,7 @@ class Api29PlaybackAudio : PlaybackAudio {
                             var lastAudible = SystemClock.elapsedRealtime()
                             var previousState = ""
                             var receivedSamples = false
+                            var formatAccepted = false
                             while (running) {
                                 val input = encoder.dequeueInputBuffer(1000)
                                 if (input >= 0) {
@@ -127,14 +128,37 @@ class Api29PlaybackAudio : PlaybackAudio {
                                     samples += count / 4
                                     if (count == 0) SystemClock.sleep(5)
                                 }
-                                var output = encoder.dequeueOutputBuffer(info, 1000)
-                                while (output >= 0) {
+                                while (true) {
+                                    val output = encoder.dequeueOutputBuffer(info, 1000)
+                                    if (output == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                                        val actual = encoder.outputFormat
+                                        val config = actual.getByteBuffer("csd-0")?.duplicate()
+                                        check(
+                                            actual.getInteger(MediaFormat.KEY_SAMPLE_RATE) ==
+                                                44100 &&
+                                                actual.getInteger(MediaFormat.KEY_CHANNEL_COUNT) ==
+                                                    2
+                                        )
+                                        check(
+                                            config != null &&
+                                                config.remaining() == 2 &&
+                                                config.get().toInt() == 0x12 &&
+                                                config.get().toInt() == 0x10
+                                        ) {
+                                            "AAC encoder exceeded negotiated format"
+                                        }
+                                        formatAccepted = true
+                                        continue
+                                    }
+                                    if (output < 0) break
                                     try {
                                         if (
                                             info.size > 0 &&
                                                 info.flags and
                                                     MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
                                         ) {
+                                            check(formatAccepted)
+                                            require(info.size <= 8191)
                                             val buffer = encoder.getOutputBuffer(output)!!
                                             buffer.position(info.offset)
                                             buffer.limit(info.offset + info.size)
@@ -145,7 +169,6 @@ class Api29PlaybackAudio : PlaybackAudio {
                                     } finally {
                                         encoder.releaseOutputBuffer(output, false)
                                     }
-                                    output = encoder.dequeueOutputBuffer(info, 0)
                                 }
                             }
                         } catch (_: Exception) {

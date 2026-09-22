@@ -129,3 +129,11 @@ still conditional on capability/evidence. No native dependency is added.
 Host verification: 27 Cast JVM tests, debug build/lint and formatting/architecture
 checks pass. APK audit: 1,376,115 bytes, minSdk21, signature verified, no native
 libraries. Physical projection/audio/visual acceptance remains deferred.
+
+## dev.29 increment
+
+Audio-only API29+ mode uses consented playback capture and AAC publishing without a virtual display or video encoder. Mode-aware controls/history, old-gateway rejection, bounded recovery and audio-only RTSP keepalive are implemented. No native dependency added.
+Product milestones and physical acceptance remain open.
+
+See [Audio sharing](docs/audio-sharing.md). Host verification: 30 JVM tests,
+debug build/lint and APK audit pass (1,383,104 bytes, minSdk21, no native libraries).

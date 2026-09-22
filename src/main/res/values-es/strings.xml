@@ -156,7 +156,7 @@
         sigue al contenido capturado.
     </string>
     <string name="video_profile">Perfil de vídeo · %1$d × %2$d · %3$d fps</string>
-    <string name="history_title">Sesiones de duplicación</string>
+    <string name="history_title">Sesiones compartidas</string>
     <string name="history_detail">
         Últimas 30 sesiones en este teléfono. El formato es la configuración del codificador y el
         audio su último estado observado, no prueba de reproducción en la TV.
@@ -165,10 +165,31 @@
     <string name="history_clear_confirm">
         ¿Borrar las sesiones finalizadas de este teléfono? Se conservará la sesión activa.
     </string>
-    <string name="history_empty">Tus sesiones de duplicación aparecerán aquí.</string>
+    <string name="history_empty">Tus sesiones compartidas aparecerán aquí.</string>
     <string name="history_receiver">Receptor</string>
     <string name="history_interrupted">Interrumpida — hora de finalización desconocida</string>
     <string name="history_ended">Finalizó: %1$s</string>
     <string name="history_remote_title">Último comando remoto</string>
     <string name="history_audio">Último estado del audio: %1$s</string>
+    <string name="audio_sharing">Compartiendo audio de apps</string>
+    <string name="start_audio">Compartir audio</string>
+    <string name="audio_only_detail">
+        Comparte el audio permitido de otras apps. No se envía video de pantalla ni
+        micrófono. Android pedirá permiso de captura.
+    </string>
+    <string name="audio_only_unsupported">
+        Compartir solo audio requiere Android 10 o posterior. El control remoto sigue disponible en
+        este teléfono.
+    </string>
+    <string name="audio_only_unavailable">
+        Audio de apps no disponible. No se puede continuar la transmisión.
+    </string>
+    <string name="audio_permission_required">
+        Se necesita permiso de audio para compartir solo audio.
+    </string>
+    <string name="media_pending">
+        El envío de archivos multimedia aún no está disponible. Usa Pantalla para duplicarla o Audio
+        para compartir el audio permitido de apps.
+    </string>
+    <string name="this_phone_audio">Audio de este teléfono</string>
 </resources>

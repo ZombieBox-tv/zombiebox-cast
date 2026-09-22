@@ -1,5 +1,6 @@
 package io.github.diegog0477.zombiebox.cast.features.history.data
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.history.domain.CaptureHistory
 import io.github.diegog0477.zombiebox.cast.features.history.domain.model.*
 import java.io.*
@@ -11,7 +12,7 @@ internal object HistoryCodec {
     fun encode(values: List<CaptureSession>): ByteArray {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { output ->
-            output.writeInt(1)
+            output.writeInt(2)
             output.writeInt(values.size.coerceAtMost(CaptureHistory.LIMIT))
             for (value in values.take(CaptureHistory.LIMIT)) {
                 output.writeUTF(value.id.take(64))
@@ -24,6 +25,7 @@ internal object HistoryCodec {
                 output.writeInt(value.height)
                 output.writeInt(value.fps)
                 output.writeUTF(value.audio.name)
+                output.writeUTF(value.mode.name)
             }
         }
         return bytes.toByteArray()
@@ -33,7 +35,8 @@ internal object HistoryCodec {
         if (bytes.size > MAX_BYTES) return emptyList()
         return try {
             DataInputStream(ByteArrayInputStream(bytes)).use { input ->
-                require(input.readInt() == 1)
+                val version = input.readInt()
+                require(version in 1..2)
                 val count = input.readInt()
                 require(count in 0..CaptureHistory.LIMIT)
                 val values =
@@ -48,6 +51,9 @@ internal object HistoryCodec {
                         val height = input.readInt()
                         val fps = input.readInt()
                         val audio = SessionAudio.valueOf(input.readUTF())
+                        val mode =
+                            if (version == 2) CaptureMode.valueOf(input.readUTF())
+                            else CaptureMode.SCREEN
                         require(
                             id.length in 1..64 && process.length in 1..64 && receiver.length <= 120
                         )
@@ -66,6 +72,7 @@ internal object HistoryCodec {
                             height,
                             fps,
                             audio,
+                            mode,
                         )
                     }
                 require(input.available() == 0)

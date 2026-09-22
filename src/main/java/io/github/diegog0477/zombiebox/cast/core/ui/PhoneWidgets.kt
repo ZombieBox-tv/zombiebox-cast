@@ -56,16 +56,18 @@ class PhoneWidgets(val context: Context) {
             minimumWidth = 0
             minWidth = 0
             setPadding(dp(8), dp(4), dp(8), dp(4))
-            this.background =
-                StateListDrawable().apply {
-                    addState(
-                        intArrayOf(android.R.attr.state_focused),
-                        shape(if (selected) accent else surface, accent),
-                    )
-                    addState(intArrayOf(android.R.attr.state_pressed), shape(accent))
-                    addState(intArrayOf(), shape(if (selected) accent else surface))
-                }
+            this.background = buttonBackground(selected)
             setOnClickListener { click() }
+        }
+
+    fun buttonBackground(selected: Boolean) =
+        StateListDrawable().apply {
+            addState(
+                intArrayOf(android.R.attr.state_focused),
+                shape(if (selected) accent else surface, accent),
+            )
+            addState(intArrayOf(android.R.attr.state_pressed), shape(accent))
+            addState(intArrayOf(), shape(if (selected) accent else surface))
         }
 
     fun navigation(text: String, selected: Boolean, icon: Int, click: () -> Unit) =

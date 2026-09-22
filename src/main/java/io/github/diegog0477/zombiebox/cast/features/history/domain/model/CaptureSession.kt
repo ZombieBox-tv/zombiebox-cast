@@ -1,5 +1,7 @@
 package io.github.diegog0477.zombiebox.cast.features.history.domain.model
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
+
 enum class SessionPhase(val terminal: Boolean = false) {
     STARTING,
     SHARING,
@@ -29,4 +31,5 @@ data class CaptureSession(
     val height: Int = 0,
     val fps: Int = 0,
     val audio: SessionAudio = SessionAudio.DISABLED,
+    val mode: CaptureMode = CaptureMode.SCREEN,
 )

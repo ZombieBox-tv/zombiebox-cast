@@ -1,5 +1,6 @@
 package io.github.diegog0477.zombiebox.cast.features.casting.domain.repository
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGrant
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
 
@@ -8,7 +9,7 @@ interface CastRepository {
 
     fun receivers(): List<Receiver>
 
-    fun create(receiver: String): CastGrant
+    fun create(receiver: String, mode: CaptureMode = CaptureMode.SCREEN): CastGrant
 
     fun stop(id: String)
 }

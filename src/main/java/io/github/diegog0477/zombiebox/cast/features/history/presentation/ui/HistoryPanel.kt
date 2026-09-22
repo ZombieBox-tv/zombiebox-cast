@@ -5,6 +5,7 @@ import android.content.Context
 import android.widget.LinearLayout
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.core.ui.PhoneWidgets
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.history.domain.model.*
 import java.text.DateFormat
 import java.util.Date
@@ -43,12 +44,22 @@ class HistoryPanel(context: Context, clear: () -> Unit) : LinearLayout(context) 
                     18f,
                 )
             )
+            card.addView(
+                ui.label(
+                    if (session.mode == CaptureMode.AUDIO) R.string.mode_audio
+                    else R.string.mode_screen,
+                    14f,
+                    ui.muted,
+                )
+            )
             card.addView(ui.label(dates.format(Date(session.startedAt)), 14f, ui.muted))
             card.addView(
                 ui.label(
                     when (session.phase) {
                         SessionPhase.STARTING -> R.string.buffering
-                        SessionPhase.SHARING -> R.string.sharing
+                        SessionPhase.SHARING ->
+                            if (session.mode == CaptureMode.AUDIO) R.string.audio_sharing
+                            else R.string.sharing
                         SessionPhase.RECOVERING -> R.string.recovering
                         SessionPhase.STOPPED -> R.string.stopped
                         SessionPhase.FAILED -> R.string.failed
@@ -84,7 +95,9 @@ class HistoryPanel(context: Context, clear: () -> Unit) : LinearLayout(context) 
                 when (session.audio) {
                     SessionAudio.DISABLED -> R.string.audio_disabled
                     SessionAudio.WAITING -> R.string.audio_waiting
-                    SessionAudio.UNAVAILABLE -> R.string.audio_unavailable
+                    SessionAudio.UNAVAILABLE ->
+                        if (session.mode == CaptureMode.AUDIO) R.string.audio_only_unavailable
+                        else R.string.audio_unavailable
                     SessionAudio.CAPTURING -> R.string.audio_capturing
                     SessionAudio.SILENT -> R.string.audio_silent
                 }

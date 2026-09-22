@@ -13,6 +13,7 @@ data class CapturePreferences(
     val lowLatency: Boolean = false,
     val audio: Boolean = false,
     val orientation: CaptureOrientation = CaptureOrientation.AUTO,
+    val mode: CaptureMode = CaptureMode.SCREEN,
 ) {
     fun video(receiver: CastVideo): CastVideo {
         val width =

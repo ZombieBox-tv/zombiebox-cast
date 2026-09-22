@@ -1,5 +1,6 @@
 package io.github.diegog0477.zombiebox.cast
 
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CaptureMode
 import io.github.diegog0477.zombiebox.cast.features.history.data.HistoryCodec
 import io.github.diegog0477.zombiebox.cast.features.history.domain.CaptureHistory
 import io.github.diegog0477.zombiebox.cast.features.history.domain.model.*
@@ -26,6 +27,19 @@ class CaptureHistoryTest {
 
     private fun history(process: String = "process-one") =
         CaptureHistory(store, process, { time }, { "local-${++sequence}" })
+
+    @Test
+    fun modeRoundTripsAndVersionOneRecordsKeepTheirScreenMeaning() {
+        val history = history()
+        history.begin("TV", true, CaptureMode.AUDIO)
+        assertEquals(CaptureMode.AUDIO, history.sessions().single().mode)
+        history.begin("TV", false)
+        val current = HistoryCodec.encode(listOf(history.sessions().first()))
+        // Version 1 had the same record prefix, without the trailing mode string.
+        val old = current.copyOf(current.size - 8)
+        old[3] = 1
+        assertEquals(CaptureMode.SCREEN, HistoryCodec.decode(old).single().mode)
+    }
 
     @Test
     fun recoveryAndFailurePreserveObservedFormatAndCannotBeResurrected() {
