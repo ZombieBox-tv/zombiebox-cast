@@ -130,4 +130,17 @@
     <string name="provider_airplay">AirPlay</string>
     <string name="device_selected">%1$s  ✓</string>
     <string name="remote_target">Controlando %1$s</string>
+    <string name="video_quality">Calidad de vídeo</string>
+    <string name="quality_auto">Auto</string>
+    <string name="quality_480">480p</string>
+    <string name="quality_720">720p</string>
+    <string name="quality_limit">
+        Límite máximo; tu TV puede necesitar una resolución menor. El envío a 1080p aún no
+        está disponible.
+    </string>
+    <string name="low_latency">Modo de baja latencia</string>
+    <string name="low_latency_detail">
+        Usa menos ancho de banda y más fotogramas de recuperación. El retraso real depende de la TV
+        y la red.
+    </string>
 </resources>

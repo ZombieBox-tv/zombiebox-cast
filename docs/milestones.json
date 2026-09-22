@@ -16,7 +16,8 @@
     "Dev.22: Requests consented receiver replacement; the gateway retains the previous receiver until Cast readiness. APK versionCode 22; encoder/capture implementation unchanged. Product and physical exit gates remain open.",
     "Dev.23: LAN discovery, selectable gateway candidates and system-bar/viewport correction; APK versionCode 23. QR and full redesign remain planned. Product and physical gates remain open.",
     "Dev.24: Phone-first dark/green dashboard, QR/manual consent, saved target selection/revocation, gateway proof/reconnection and a discrete Remote screen. Cast may adopt assessed native dependencies; this increment adds only Java ZXing. APK versionCode 24. Product and physical gates remain open.",
-    "Dev.25: Consumes the additive protocol contract; capture and full visual redesign are unchanged and remain pending."
+    "Dev.25: Consumes the additive protocol contract; capture and full visual redesign are unchanged and remain pending.",
+    "Dev.26: Persisted receiver-bounded capture settings, quiet navigation, decorative source card and restored tab/scroll. Full redesign and physical acceptance remain open."
   ],
   "milestones": [
     {
@@ -34,5 +35,5 @@
       "remoteId": null
     }
   ],
-  "developmentCheckpoint": "v0.1.0-dev.24"
+  "developmentCheckpoint": "v0.1.0-dev.26"
 }

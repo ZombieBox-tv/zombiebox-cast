@@ -3,7 +3,7 @@ package io.github.diegog0477.zombiebox.cast.features.home.presentation.ui
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Typeface
-import android.os.Build
+import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -11,7 +11,9 @@ import android.view.View
 import android.widget.*
 import io.github.diegog0477.zombiebox.cast.R
 import io.github.diegog0477.zombiebox.cast.core.ui.PhoneWidgets
+import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CapturePreferences
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
+import io.github.diegog0477.zombiebox.cast.features.casting.presentation.ui.CaptureOptions
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.ui.RemotePanel
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.viewmodel.CompanionViewModel
 
@@ -25,6 +27,8 @@ class CastDashboard(
     send: (String, String) -> Unit,
     private val selectTrusted: (String) -> Unit,
     forget: () -> Unit,
+    preferences: CapturePreferences,
+    changePreferences: (CapturePreferences) -> Unit,
 ) : LinearLayout(context) {
     private val ui = PhoneWidgets(context)
     private val pages = ui.column()
@@ -42,13 +46,15 @@ class CastDashboard(
     private val resultStatus = ui.label(R.string.remote_no_commands, 15f, ui.muted)
     private val pairButton = ui.action(context.getString(R.string.pair_phone), click = pair)
     val status = ui.label(R.string.ready, 16f, ui.accent)
-    val audioStatus = ui.label(R.string.audio_disabled, 14f, ui.muted)
-    val audio =
-        Switch(context).apply {
-            setText(R.string.share_audio)
-            setTextColor(ui.foreground)
-            isEnabled = Build.VERSION.SDK_INT >= 29
-        }
+    private val options = CaptureOptions(context, changePreferences).apply { render(preferences) }
+    val audioStatus
+        get() = options.audioStatus
+
+    val audio
+        get() = options.audio
+
+    private val scroll = ScrollView(context).apply { isFillViewport = true }
+    private val scrollPositions = IntArray(5)
     val start = ui.action(context.getString(R.string.start), true, startCapture)
     private val stop = ui.action(context.getString(R.string.stop), click = stopCapture)
     private val forgetButton = ui.action(context.getString(R.string.forget_phone), click = forget)
@@ -59,7 +65,6 @@ class CastDashboard(
     init {
         orientation = VERTICAL
         setBackgroundColor(ui.background)
-        val scroll = ScrollView(context).apply { isFillViewport = true }
         val content = ui.column().apply { setPadding(ui.dp(20), ui.dp(12), ui.dp(20), ui.dp(12)) }
         val title = context.getString(R.string.cast_title)
         content.addView(
@@ -95,9 +100,17 @@ class CastDashboard(
         }
         home.addView(modes)
         val source = ui.card()
-        source.addView(ui.label(R.string.this_phone, 23f))
-        source.addView(status)
-        source.addView(ui.label(R.string.screen_detail, 16f, ui.muted))
+        val sourceRow = ui.row()
+        sourceRow.addView(
+            PhoneIllustration(context),
+            LayoutParams(ui.dp(88), ui.dp(156)).apply { marginEnd = ui.dp(16) },
+        )
+        val sourceText = ui.column()
+        sourceText.addView(ui.label(R.string.this_phone, 23f))
+        sourceText.addView(status)
+        sourceText.addView(ui.label(R.string.screen_detail, 16f, ui.muted))
+        sourceRow.addView(sourceText, LayoutParams(0, -2, 1f))
+        source.addView(sourceRow)
         home.addView(source)
         val heading = ui.row()
         heading.addView(ui.label(R.string.available_devices, 20f), LayoutParams(0, -2, 1f))
@@ -114,12 +127,13 @@ class CastDashboard(
             },
         )
         home.addView(stop)
-        val options = ui.card()
-        options.addView(audio, LayoutParams(-1, ui.dp(56)))
-        options.addView(audioStatus)
-        options.addView(ui.label(R.string.quality_adaptive, 15f, ui.muted))
-        options.addView(ui.label(R.string.orientation_adaptive, 15f, ui.muted))
-        home.addView(options)
+        home.addView(
+            options,
+            LayoutParams(-1, -2).apply {
+                topMargin = ui.dp(16)
+                bottomMargin = ui.dp(16)
+            },
+        )
         home.addView(ui.label(R.string.consent, 14f, ui.muted))
         devices.addView(ui.label(R.string.nav_devices, 24f))
         devices.addView(trustedStatus)
@@ -141,7 +155,8 @@ class CastDashboard(
     }
 
     private fun showPage(index: Int) {
-        page = index
+        scrollPositions[page] = scroll.scrollY
+        page = index.coerceIn(0, 4)
         for (i in 0 until pages.childCount) pages.getChildAt(i).visibility =
             if (i == page) View.VISIBLE else View.GONE
         navigation.removeAllViews()
@@ -155,11 +170,27 @@ class CastDashboard(
                 )
                 .withIndex()) {
             navigation.addView(
-                ui.action(context.getString(name), i == page) { showPage(i) }
-                    .apply { textSize = 12f },
-                LayoutParams(0, ui.dp(56), 1f),
+                ui.navigation(context.getString(name), i == page) { showPage(i) },
+                LayoutParams(0, -2, 1f),
             )
         }
+        scroll.post { scroll.scrollTo(0, scrollPositions[page]) }
+    }
+
+    fun renderPreferences(value: CapturePreferences) = options.render(value)
+
+    fun saveNavigation(out: Bundle) {
+        scrollPositions[page] = scroll.scrollY
+        out.putInt("dashboardPage", page)
+        out.putIntArray("dashboardScroll", scrollPositions)
+    }
+
+    fun restoreNavigation(saved: Bundle?) {
+        val restored = saved?.getIntArray("dashboardScroll") ?: return
+        if (restored.size != scrollPositions.size) return
+        showPage(saved.getInt("dashboardPage", 0))
+        restored.copyInto(scrollPositions)
+        scroll.post { scroll.scrollTo(0, scrollPositions[page]) }
     }
 
     fun receivers(values: List<Receiver>, selected: String, select: (String) -> Unit) {
@@ -217,11 +248,11 @@ class CastDashboard(
         }
     }
 
-    fun sharing(value: Boolean) {
-        sharing = value
-        stop.visibility = if (value) View.VISIBLE else View.GONE
-        audio.isEnabled = !value && Build.VERSION.SDK_INT >= 29
-        pairButton.isEnabled = !value
-        forgetButton.isEnabled = !value
+    fun sharing(active: Boolean, locked: Boolean = active) {
+        sharing = locked
+        stop.visibility = if (active) View.VISIBLE else View.GONE
+        options.lock(locked)
+        pairButton.isEnabled = !locked
+        forgetButton.isEnabled = !locked
     }
 }

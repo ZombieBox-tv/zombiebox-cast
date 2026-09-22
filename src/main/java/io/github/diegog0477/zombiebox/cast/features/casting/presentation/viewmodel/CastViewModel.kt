@@ -14,7 +14,19 @@ class CastViewModel(
     var observer: ((CastState) -> Unit)? = null
     private val gate = Any()
     private var closed = false
+    private var generation = 0
     private var pending: CastGrant? = null
+
+    fun clearReceiver() {
+        val abandoned =
+            synchronized(gate) {
+                generation++
+                state = CastState()
+                pending.also { pending = null }
+            }
+        if (abandoned != null) execute { discard(abandoned) }
+        observer?.invoke(state)
+    }
 
     fun select(id: String) {
         if (!state.busy && !closed) {
@@ -58,6 +70,7 @@ class CastViewModel(
 
     private fun work(task: (CastState) -> CastState) {
         if (closed || state.busy) return
+        val revision = generation
         val previous = state
         state = state.copy(busy = true, failed = false)
         observer?.invoke(state)
@@ -70,12 +83,12 @@ class CastViewModel(
                 }
             val abandoned =
                 synchronized(gate) {
-                    if (closed) true
+                    if (closed || revision != generation) true
                     else {
                         pending = next.grant
                         deliver {
                             synchronized(gate) {
-                                if (!closed) {
+                                if (!closed && revision == generation) {
                                     state = next
                                     observer?.invoke(state)
                                 }

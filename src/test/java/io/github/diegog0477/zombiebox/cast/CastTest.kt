@@ -83,6 +83,36 @@ class CastTest {
     }
 
     @Test
+    fun revokedReceiverCannotReturnFromQueuedGrant() {
+        val work = mutableListOf<() -> Unit>()
+        val ui = mutableListOf<() -> Unit>()
+        val repo = Repo()
+        val model = CastViewModel(repo, { work.add(it) }, { ui.add(it) })
+        model.select("tv")
+        model.start()
+        work.removeAt(0)()
+        model.clearReceiver()
+        ui.removeAt(0)()
+        work.removeAt(0)()
+        assertEquals("", model.state.selected)
+        assertNull(model.state.grant)
+        assertEquals(listOf("grant"), repo.stopped)
+    }
+
+    @Test
+    fun revokedReceiverDiscardsInFlightWork() {
+        val work = mutableListOf<() -> Unit>()
+        val repo = Repo()
+        val model = CastViewModel(repo, { work.add(it) }, { it() })
+        model.select("tv")
+        model.start()
+        model.clearReceiver()
+        work.removeAt(0)()
+        assertEquals("", model.state.selected)
+        assertEquals(listOf("grant"), repo.stopped)
+    }
+
+    @Test
     fun negotiatedVideoBudgetBoundsBothOrientations() {
         val profile = io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo()
         for ((width, height) in listOf(Pair(1920, 1080), Pair(1080, 1920))) {

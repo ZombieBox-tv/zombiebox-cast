@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong
 @Suppress("DEPRECATION")
 class ProjectionService : Service() {
     private var videoProfile = CastVideo()
+    private var keyFrameSeconds = 2
 
     companion object {
         @Volatile
@@ -64,6 +65,7 @@ class ProjectionService : Service() {
                     return START_NOT_STICKY
                 }
         shareAudio = intent.getBooleanExtra("audio", false)
+        keyFrameSeconds = intent.getIntExtra("keyFrameSeconds", 2).coerceIn(1, 2)
         try {
             videoProfile =
                 CastVideo(
@@ -157,6 +159,7 @@ class ProjectionService : Service() {
                 ProjectionEncoder(
                     projection,
                     videoProfile,
+                    keyFrameSeconds,
                     resources.displayMetrics.densityDpi,
                     { captureSize },
                     publisherFactory,

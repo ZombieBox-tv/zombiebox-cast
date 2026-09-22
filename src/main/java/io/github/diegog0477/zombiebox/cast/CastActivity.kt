@@ -8,7 +8,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.widget.*
 import io.github.diegog0477.zombiebox.cast.features.casting.data.GatewayCastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.data.LocalCapturePreferences
 import io.github.diegog0477.zombiebox.cast.features.casting.platform.ProjectionService
+import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CapturePreferencesViewModel
 import io.github.diegog0477.zombiebox.cast.features.casting.presentation.viewmodel.CastViewModel
 import io.github.diegog0477.zombiebox.cast.features.companion.data.GatewayCompanionRepository
 import io.github.diegog0477.zombiebox.cast.features.companion.platform.QrScanActivity
@@ -24,6 +26,7 @@ class CastActivity : Activity() {
     private val executor = Executors.newSingleThreadExecutor()
     private val handler = Handler()
     private lateinit var repository: GatewayCastRepository
+    private lateinit var capturePreferences: CapturePreferencesViewModel
     private lateinit var model: CastViewModel
     private lateinit var discoveryModel: DiscoveryViewModel
     private lateinit var dashboard: CastDashboard
@@ -49,11 +52,19 @@ class CastActivity : Activity() {
                         else -> R.string.stopped
                     }
                 )
-                dashboard.sharing(ProjectionService.active)
+                dashboard.sharing(
+                    ProjectionService.active,
+                    capturePending || model.state.busy || ProjectionService.active,
+                )
+                capturePreferences.lock(
+                    ProjectionService.active || capturePending || model.state.busy
+                )
                 start.isEnabled =
                     !model.state.busy &&
                         model.state.selected.isNotEmpty() &&
-                        !ProjectionService.active
+                        !ProjectionService.active &&
+                        !capturePending &&
+                        repository.paired
             }
         }
     private var receiverKey = ""
@@ -79,8 +90,17 @@ class CastActivity : Activity() {
     }
 
     private fun beginCapture() {
-        if (ProjectionService.active || capturePending) return
+        if (
+            ProjectionService.active ||
+                capturePending ||
+                model.state.busy ||
+                !repository.paired ||
+                model.state.selected.isEmpty()
+        )
+            return
         capturePending = true
+        capturePreferences.lock(true)
+        dashboard.sharing(false, true)
         shareAudio = audio.isChecked && Build.VERSION.SDK_INT >= 29
         if (
             Build.VERSION.SDK_INT >= 29 &&
@@ -94,6 +114,12 @@ class CastActivity : Activity() {
 
     override fun onCreate(saved: Bundle?) {
         super.onCreate(saved)
+        capturePending = saved?.getBoolean("capturePending", false) ?: false
+        shareAudio = saved?.getBoolean("shareAudio", false) ?: false
+        capturePreferences =
+            CapturePreferencesViewModel(
+                LocalCapturePreferences(getSharedPreferences("cast", MODE_PRIVATE))
+            )
         repository = GatewayCastRepository(getSharedPreferences("cast", MODE_PRIVATE))
         val background = executor
         val ui = handler
@@ -103,6 +129,7 @@ class CastActivity : Activity() {
                 { work -> background.execute { work() } },
                 { done -> ui.post { done() } },
             )
+        saved?.getString("captureReceiver")?.let(model::select)
         discoveryModel =
             DiscoveryViewModel(
                 GatewayDiscovery()::scan,
@@ -138,7 +165,11 @@ class CastActivity : Activity() {
                             .setNegativeButton(android.R.string.cancel, null)
                             .show()
                 },
+                capturePreferences.state,
+                capturePreferences::update,
             )
+        capturePreferences.observer = dashboard::renderPreferences
+        dashboard.restoreNavigation(saved)
         status = dashboard.status
         audioStatus = dashboard.audioStatus
         audio = dashboard.audio
@@ -172,15 +203,29 @@ class CastActivity : Activity() {
             if (repository.paired) model.refresh()
             else {
                 receiverKey = ""
+                model.clearReceiver()
                 dashboard.receivers(emptyList(), "", model::select)
                 start.isEnabled = false
             }
         }
         dashboard.companion(companion.state)
-        dashboard.sharing(ProjectionService.active)
+        dashboard.sharing(
+            ProjectionService.active,
+            capturePending || model.state.busy || ProjectionService.active,
+        )
+        capturePreferences.lock(ProjectionService.active || capturePending || model.state.busy)
         model.observer = { state ->
+            capturePreferences.lock(state.busy || capturePending || ProjectionService.active)
+            dashboard.sharing(
+                ProjectionService.active,
+                state.busy || capturePending || ProjectionService.active,
+            )
             start.isEnabled =
-                !state.busy && state.selected.isNotEmpty() && !ProjectionService.active
+                !state.busy &&
+                    state.selected.isNotEmpty() &&
+                    !ProjectionService.active &&
+                    !capturePending &&
+                    repository.paired
             status.setText(
                 if (ProjectionService.active) R.string.sharing
                 else if (state.failed) R.string.failed
@@ -197,15 +242,17 @@ class CastActivity : Activity() {
                 consent = null
                 model.consumeGrant()
                 if (permission != null && !ProjectionService.active) {
+                    val video = capturePreferences.state.video(grant.video)
                     val intent =
                         Intent(this, ProjectionService::class.java)
                             .putExtra("audio", shareAudio)
                             .putExtra("consent", permission)
                             .putExtra("castId", grant.id)
-                            .putExtra("maxWidth", grant.video.maxWidth)
-                            .putExtra("maxHeight", grant.video.maxHeight)
-                            .putExtra("fps", grant.video.fps)
-                            .putExtra("bitrate", grant.video.bitrate)
+                            .putExtra("maxWidth", video.maxWidth)
+                            .putExtra("maxHeight", video.maxHeight)
+                            .putExtra("fps", video.fps)
+                            .putExtra("keyFrameSeconds", capturePreferences.state.keyFrameSeconds)
+                            .putExtra("bitrate", video.bitrate)
                             .putExtra("host", grant.host)
                             .putExtra("port", grant.port)
                             .putExtra("path", grant.path)
@@ -231,8 +278,11 @@ class CastActivity : Activity() {
                         } catch (_: Exception) {}
                     }
             }
+            if (state.failed || (!state.busy && state.selected.isEmpty())) consent = null
+            if (consent != null && !state.busy && state.grant == null) model.start()
         }
-        if (repository.paired) model.refresh() else discoveryModel.refresh()
+        if (repository.paired && !capturePending) model.refresh()
+        else if (!repository.paired) discoveryModel.refresh()
     }
 
     private fun renderAudioStatus() {
@@ -301,14 +351,25 @@ class CastActivity : Activity() {
         }
         if (request == 101) {
             capturePending = false
+            capturePreferences.lock(ProjectionService.active)
+            dashboard.sharing(ProjectionService.active)
             if (result == RESULT_OK && data != null) {
                 consent = data
-                model.start()
+                if (!model.state.busy) model.start()
             }
         }
     }
 
+    override fun onSaveInstanceState(out: Bundle) {
+        dashboard.saveNavigation(out)
+        out.putBoolean("capturePending", capturePending)
+        out.putBoolean("shareAudio", shareAudio)
+        out.putString("captureReceiver", model.state.selected)
+        super.onSaveInstanceState(out)
+    }
+
     override fun onDestroy() {
+        capturePreferences.observer = null
         companion.close()
         handler.removeCallbacks(companionTick)
         discoveryModel.close()

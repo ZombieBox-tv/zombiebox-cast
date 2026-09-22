@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ProjectionEncoder(
     private val projection: MediaProjection,
     private val profile: CastVideo,
+    private val keyFrameSeconds: Int,
     private val density: Int,
     private val dimensions: () -> Pair<Int, Int>,
     private val publisherFactory: () -> RtspPublisher,
@@ -100,7 +101,7 @@ class ProjectionEncoder(
                     )
                     setInteger(MediaFormat.KEY_BIT_RATE, profile.bitrate)
                     setInteger(MediaFormat.KEY_FRAME_RATE, profile.fps)
-                    setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+                    setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, keyFrameSeconds)
                     setInteger(
                         MediaFormat.KEY_PROFILE,
                         MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline,

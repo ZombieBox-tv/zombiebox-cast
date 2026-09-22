@@ -78,3 +78,23 @@ Verification: 13 JVM tests, debug/unsigned-release builds and lint pass. Debug A
 ## dev.25 increment
 
 Consumes the additive protocol contract; capture and full visual redesign are unchanged and remain pending.
+
+## dev.26 increment
+
+Persisted Auto/480p/720p limits and low-latency preference now drive the actual
+encoder budget through a platform-free ViewModel and injected preference store.
+Limits cannot raise the gateway's receiver budget. Low latency caps the target at
+1 Mbit/s and uses a one-second keyframe interval instead of two seconds; it does
+not guarantee end-to-end delay. Current sending remains H.264, at most 720p/30fps.
+Preferences freeze while requesting capture or sharing. Audio still requires
+API29 and the source application's permission.
+
+The Home source card has an original decorative phone illustration, navigation
+uses quiet surfaces with a green selected label, and tabs/scroll offsets restore
+after Activity recreation. Revocation invalidates pending receiver results and
+revokes abandoned grants. English/Spanish strings accompany the new controls.
+
+Verification: debug build, lint and 18 JVM tests pass. APK audit remains minSdk21
+with no native libraries. Full visual acceptance, orientation lock, 1080p sending,
+Media/audio-only flows, session history and extended Remote remain open; no
+physical acceptance or milestone completion is claimed.

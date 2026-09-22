@@ -66,6 +66,19 @@ class PhoneWidgets(val context: Context) {
             setOnClickListener { click() }
         }
 
+    fun navigation(text: String, selected: Boolean, click: () -> Unit) =
+        action(text, click = click).apply {
+            textSize = 12f
+            isSelected = selected
+            setTextColor(if (selected) accent else muted)
+            background =
+                StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_focused), shape(surface, accent))
+                    addState(intArrayOf(android.R.attr.state_pressed), shape(surface))
+                    addState(intArrayOf(), shape(this@PhoneWidgets.background))
+                }
+        }
+
     fun device(name: String, selected: Boolean, click: () -> Unit) =
         action(
                 if (selected) context.getString(R.string.device_selected, name) else name,
