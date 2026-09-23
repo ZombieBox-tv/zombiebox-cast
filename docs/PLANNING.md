@@ -1,5 +1,10 @@
 # zombiebox-cast: component work
 
+## dev.39 protocol pin
+
+Consume protocol dev.39's additive IPTV favorite flag/actions. Cast does not use
+these fields; APK and capture implementation are unchanged.
+
 The product milestones relevant to this repository are M7, M11.
 The local registry is a component projection of the workspace plan. Closing a
 component task does not close a product-wide milestone or a physical validation gate.
