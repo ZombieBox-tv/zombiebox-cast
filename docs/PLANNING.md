@@ -166,3 +166,7 @@ Product exit gates and deferred physical acceptance remain open.
 
 Direct public URL queues and Android text sharing, plus bounded native DIAL discovery and confirmed Home launch with manual fallback. No automatic launch or pairing consent through discovery.
 Product milestone completion still requires its recorded acceptance gates.
+
+## dev.40 protocol pin
+
+Consumes additive IPTV categories; Cast behavior and APK are unchanged. Physical and product gates remain open.

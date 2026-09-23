@@ -3,6 +3,7 @@
   "repository": "zombiebox-cast",
   "productRegistry": "workspace:docs/milestones.json",
   "notes": [
+    "Dev.40: Pins additive IPTV category contract; Cast APK and sender behavior unchanged. Product/physical gates remain open.",
     "Dev.39: Consume the additive IPTV favorites protocol pin; Cast transport, APK and capture behavior are unchanged. Product and physical gates remain open.",
     "Local component scope; product exit gates remain open. Hosted milestones are open; see remoteURL entries.",
     "Dev.10: shared local media tracks/text subtitles and client Home refinement. Cast consumes the protocol transport update. Product exit gates remain open.",
