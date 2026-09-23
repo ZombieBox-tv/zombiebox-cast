@@ -170,3 +170,7 @@ Product milestone completion still requires its recorded acceptance gates.
 ## dev.40 protocol pin
 
 Consumes additive IPTV categories; Cast behavior and APK are unchanged. Physical and product gates remain open.
+
+## dev.41 protocol pin
+
+Consumes additive YouTube account status/page definitions; Cast implementation and APK remain unchanged. Product and physical gates remain open.
