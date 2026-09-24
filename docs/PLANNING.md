@@ -174,3 +174,7 @@ Consumes additive IPTV categories; Cast behavior and APK are unchanged. Physical
 ## dev.41 protocol pin
 
 Consumes additive YouTube account status/page definitions; Cast implementation and APK remain unchanged. Product and physical gates remain open.
+
+## dev.42 protocol pin
+
+Consumes the additive paired AirPlay PIN contract. Cast does not use the PIN route; its sender, APK and physical gates remain unchanged.
