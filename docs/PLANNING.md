@@ -1,5 +1,16 @@
 # zombiebox-cast: component work
 
+## dev.43 recover pending companion pairing
+
+Persist one inactive pairing attempt across app restarts and retry activation
+after a lost response or expired request status. Verify the gateway proof and
+authenticated grant before storing an active companion. Reconnection checks
+bounded saved and discovered routing candidates without treating discovery as
+consent. JVM tests cover restart, expired request with a surviving approved
+grant, and a QR activation failure followed by retry. Physical phone-to-TV
+pairing and cross-subnet QR reachability remain unverified; no product
+milestone closes.
+
 ## dev.39 protocol pin
 
 Consume protocol dev.39's additive IPTV favorite flag/actions. Cast does not use

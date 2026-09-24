@@ -19,13 +19,19 @@ class CompanionViewModel(
         val nearby: List<PairingTarget> = emptyList(),
     )
 
-    var state = State(targets = repository.targets())
+    private var pending: PairingAttempt? = repository.pendingAttempt()
+
+    var state =
+        State(
+            targets = repository.targets(),
+            comparison = pending?.request?.comparison.orEmpty(),
+            phase = pending?.request?.state.orEmpty(),
+        )
         private set
 
     var observer: ((State) -> Unit)? = null
     var pairingObserver: ((State) -> Unit)? = null
     var paired: (() -> Unit)? = null
-    private var pending: PairingAttempt? = null
     private var closed = false
     private var deferred: (() -> Unit)? = null
 
@@ -39,15 +45,7 @@ class CompanionViewModel(
             val attempt = repository.join(address, targetId, qr)
             pending = attempt
             if (attempt.request.state == "APPROVED") {
-                repository.activate(attempt)
-                pending = null
-                state.copy(
-                    comparison = "",
-                    phase = "APPROVED",
-                    target = repository.status(),
-                    targets = repository.targets(),
-                    nearby = emptyList(),
-                )
+                complete(attempt)
             } else
                 state.copy(
                     comparison = attempt.request.comparison,
@@ -58,29 +56,39 @@ class CompanionViewModel(
         }
 
     fun refresh(reconnect: Boolean = false) = work {
-        val attempt = pending
+        val attempt = repository.pendingAttempt()
+        pending = attempt
         if (attempt != null) {
-            val request = repository.await(attempt)
+            val request =
+                try {
+                    repository.await(attempt)
+                } catch (statusError: Exception) {
+                    // A grant can remain valid after its short-lived request status expires.
+                    // Activation still proves the gateway and authenticates this exact grant.
+                    try {
+                        return@work complete(attempt)
+                    } catch (_: Exception) {
+                        throw statusError
+                    }
+                }
             if (request.state == "APPROVED") {
-                repository.activate(attempt)
-                pending = null
-                state.copy(
-                    comparison = "",
-                    phase = "APPROVED",
-                    target = repository.status(),
-                    targets = repository.targets(),
-                )
+                complete(attempt)
             } else {
-                if (request.state == "DENIED") pending = null
-                state.copy(phase = request.state)
+                if (request.state == "DENIED") {
+                    repository.discardPending()
+                    pending = null
+                }
+                state.copy(comparison = request.comparison, phase = request.state)
             }
         } else if (repository.paired) {
             state.copy(
                 target = if (reconnect) repository.reconnect() else repository.status(),
                 phase = "CONNECTED",
+                comparison = "",
                 targets = repository.targets(),
             )
-        } else state.copy(target = null, targets = repository.targets())
+        } else
+            state.copy(target = null, phase = "", comparison = "", targets = repository.targets())
     }
 
     fun send(action: String, provider: String = "") {
@@ -116,6 +124,18 @@ class CompanionViewModel(
             pending = null
             State(targets = repository.targets(), phase = "FORGOTTEN")
         }
+
+    private fun complete(attempt: PairingAttempt): State {
+        val target = repository.activate(attempt)
+        pending = null
+        return state.copy(
+            comparison = "",
+            phase = "APPROVED",
+            target = target,
+            targets = repository.targets(),
+            nearby = emptyList(),
+        )
+    }
 
     private fun work(defer: Boolean = false, task: () -> State) {
         if (closed) return

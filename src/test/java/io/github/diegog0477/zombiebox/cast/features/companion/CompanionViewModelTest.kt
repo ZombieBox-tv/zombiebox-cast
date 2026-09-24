@@ -16,21 +16,40 @@ class CompanionViewModelTest {
         var selected = ""
         var joinPhase = "PENDING"
         var inputId = ""
+        var pending: PairingAttempt? = null
+        var statusExpired = false
+        var activationFails = false
 
-        override fun join(address: String, targetId: String, qr: String) =
-            PairingAttempt(
-                address,
-                PairingRequest("grant", "tv", "Phone", "123456", joinPhase),
-                "secret",
-            )
+        override fun join(address: String, targetId: String, qr: String): PairingAttempt {
+            val attempt =
+                PairingAttempt(
+                    address,
+                    PairingRequest("grant", "tv", "Phone", "123456", joinPhase),
+                    "secret",
+                )
+            pending = attempt
+            return attempt
+        }
 
         override fun nearbyTargets(address: String) = listOf(PairingTarget("tv", "Living room"))
 
-        override fun await(attempt: PairingAttempt) = attempt.request.copy(state = phase)
+        override fun await(attempt: PairingAttempt): PairingRequest {
+            if (statusExpired) throw IllegalStateException("request expired")
+            return attempt.request.copy(state = phase)
+        }
 
-        override fun activate(attempt: PairingAttempt) {
+        override fun pendingAttempt() = pending
+
+        override fun discardPending() {
+            pending = null
+        }
+
+        override fun activate(attempt: PairingAttempt): CompanionStatus {
             check(phase == "APPROVED")
+            if (activationFails) throw IllegalStateException("proof unavailable")
             paired = true
+            pending = null
+            return status()
         }
 
         override fun status() =
@@ -54,6 +73,7 @@ class CompanionViewModelTest {
 
         override fun forget() {
             paired = false
+            pending = null
         }
 
         override fun targets() = if (paired) listOf(TrustedTarget("grant", "TV")) else emptyList()
@@ -137,6 +157,59 @@ class CompanionViewModelTest {
         model.forget()
         assertNull(model.state.target)
         assertFalse(repo.paired)
+    }
+
+    @Test
+    fun approvedAttemptSurvivesViewModelRecreationWithoutBecomingActive() {
+        val repo = Fake()
+        CompanionViewModel(repo, { it() }, { it() }).join("http://gateway", "tv", "")
+        assertNotNull(repo.pending)
+        assertFalse(repo.paired)
+
+        repo.phase = "APPROVED"
+        val resumed = CompanionViewModel(repo, { it() }, { it() })
+        assertEquals("PENDING", resumed.state.phase)
+        resumed.refresh()
+        assertTrue(repo.paired)
+        assertNull(repo.pending)
+        assertEquals("APPROVED", resumed.state.phase)
+    }
+
+    @Test
+    fun expiredRequestCanRecoverOnlyThroughVerifiedGrant() {
+        val repo = Fake().apply { statusExpired = true }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("http://gateway", "tv", "")
+        model.refresh()
+        assertFalse(repo.paired)
+        assertTrue(model.state.failed)
+        assertNotNull(repo.pending)
+
+        repo.phase = "APPROVED"
+        val resumed = CompanionViewModel(repo, { it() }, { it() })
+        resumed.refresh()
+        assertTrue(repo.paired)
+        assertEquals("APPROVED", resumed.state.phase)
+    }
+
+    @Test
+    fun approvedQrRemainsInactiveUntilStatusProofSucceeds() {
+        val repo =
+            Fake().apply {
+                joinPhase = "APPROVED"
+                phase = "APPROVED"
+                activationFails = true
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("", "", "scanned QR")
+        assertTrue(model.state.failed)
+        assertFalse(repo.paired)
+        assertNotNull(repo.pending)
+
+        repo.activationFails = false
+        CompanionViewModel(repo, { it() }, { it() }).refresh()
+        assertTrue(repo.paired)
+        assertNull(repo.pending)
     }
 
     @Test

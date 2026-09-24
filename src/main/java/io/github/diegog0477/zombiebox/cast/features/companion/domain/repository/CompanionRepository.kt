@@ -13,7 +13,13 @@ interface CompanionRepository {
 
     fun await(attempt: PairingAttempt): PairingRequest
 
-    fun activate(attempt: PairingAttempt)
+    /** A local recovery hint only. It never grants access until activate verifies the gateway. */
+    fun pendingAttempt(): PairingAttempt?
+
+    fun discardPending()
+
+    /** Return only a gateway-verified status; persist the grant in the same operation. */
+    fun activate(attempt: PairingAttempt): CompanionStatus
 
     fun status(): CompanionStatus
 
