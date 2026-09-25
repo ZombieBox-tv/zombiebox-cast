@@ -1,5 +1,11 @@
 # zombiebox-cast: component work
 
+## dev.44 shared protocol pin
+
+Pin Protocol dev.43's additive YouTube related and playback quality contracts.
+Cast does not consume these routes; APK capture, pairing behavior and physical
+evidence are unchanged. No product milestone closes.
+
 ## dev.43 recover pending companion pairing
 
 Persist one inactive pairing attempt across app restarts and retry activation

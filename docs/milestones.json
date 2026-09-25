@@ -3,6 +3,7 @@
   "repository": "zombiebox-cast",
   "productRegistry": "workspace:docs/milestones.json",
   "notes": [
+    "Dev.44: Pins Protocol dev.43's additive YouTube related and playback quality contracts. Cast sender/APK behavior and physical gates are unchanged.",
     "Dev.42: Pins the additive paired AirPlay PIN contract only; Cast sender, APK and physical gates are unchanged.",
     "Dev.41: Pins additive YouTube account contract only; Cast sender, APK and physical gates unchanged.",
     "Dev.40: Pins additive IPTV category contract; Cast APK and sender behavior unchanged. Product/physical gates remain open.",
