@@ -20,19 +20,22 @@ data class CapturePreferences(
             when (quality) {
                 CaptureQuality.SD -> 854
                 CaptureQuality.HD -> 1280
-                else -> 1920
+                CaptureQuality.FULL_HD -> 1920
+                else -> receiver.maxWidth
             }
         val height =
             when (quality) {
                 CaptureQuality.SD -> 480
                 CaptureQuality.HD -> 720
-                else -> 1080
+                CaptureQuality.FULL_HD -> 1080
+                else -> receiver.maxHeight
             }
         val rate =
             when (quality) {
                 CaptureQuality.SD -> 1200000
                 CaptureQuality.HD -> 2000000
-                else -> 4000000
+                CaptureQuality.FULL_HD -> 4000000
+                else -> receiver.bitrate
             }
         return receiver.copy(
             maxWidth = minOf(receiver.maxWidth, width),

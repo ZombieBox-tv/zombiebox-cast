@@ -28,7 +28,7 @@ interface SurfaceEncoders {
 
 /** Declared support is a candidate; configured, advancing output establishes health. */
 class SurfaceEncoderFactory : SurfaceEncoders {
-    private data class Candidate(
+    internal data class Candidate(
         val name: String,
         val video: CastVideo,
         val width: Int,
@@ -36,6 +36,65 @@ class SurfaceEncoderFactory : SurfaceEncoders {
         val profile: Int,
         val level: Int,
     )
+
+    companion object {
+        @Volatile private var cachedProbe: Boolean? = null
+
+        fun probe4K(): Boolean {
+            cachedProbe?.let {
+                return it
+            }
+            val result =
+                try {
+                    tryProbe4K()
+                } catch (_: Throwable) {
+                    false
+                }
+            cachedProbe = result
+            return result
+        }
+
+        internal fun setProbeOverride(value: Boolean?) {
+            cachedProbe = value
+        }
+
+        private fun tryProbe4K(): Boolean {
+            val encoders =
+                MediaCodecList(MediaCodecList.REGULAR_CODECS)
+                    .codecInfos
+                    .filter {
+                        it.isEncoder &&
+                            it.supportedTypes.any { type -> type.equals("video/avc", true) }
+                    }
+                    .take(16)
+            if (encoders.isEmpty()) return false
+
+            val budget = CastVideo(3840, 2160, 30, 12000000)
+            val source = Pair(3840, 2160)
+            val factory = SurfaceEncoderFactory()
+            for (info in encoders) {
+                val candidate = factory.candidate(info, budget, source) ?: continue
+                var started: StartedEncoder? = null
+                try {
+                    started = factory.start(candidate, 2)
+                    return true
+                } catch (_: Throwable) {
+                    // Encoder rejected or failed to configure/start 4K
+                } finally {
+                    try {
+                        started?.codec?.stop()
+                    } catch (_: Throwable) {}
+                    try {
+                        started?.codec?.release()
+                    } catch (_: Throwable) {}
+                    try {
+                        started?.surface?.release()
+                    } catch (_: Throwable) {}
+                }
+            }
+            return false
+        }
+    }
 
     override fun open(
         budget: CastVideo,
@@ -67,7 +126,7 @@ class SurfaceEncoderFactory : SurfaceEncoders {
         throw IllegalStateException("No bounded surface encoder accepted this capture")
     }
 
-    private fun candidate(
+    internal fun candidate(
         info: MediaCodecInfo,
         budget: CastVideo,
         source: Pair<Int, Int>,
@@ -86,6 +145,7 @@ class SurfaceEncoderFactory : SurfaceEncoders {
         if (!video.areSizeAndRateSupported(width, height, budget.fps.toDouble())) return null
         val level =
             when {
+                width > 1920 || height > 1080 -> MediaCodecInfo.CodecProfileLevel.AVCLevel51
                 width > 1280 || height > 720 -> MediaCodecInfo.CodecProfileLevel.AVCLevel4
                 width > 640 || height > 480 -> MediaCodecInfo.CodecProfileLevel.AVCLevel31
                 else -> MediaCodecInfo.CodecProfileLevel.AVCLevel3
@@ -107,7 +167,7 @@ class SurfaceEncoderFactory : SurfaceEncoders {
     }
 
     /** Own partially-created resources until the caller receives a running encoder. */
-    private fun start(candidate: Candidate, keyFrameSeconds: Int): StartedEncoder {
+    internal fun start(candidate: Candidate, keyFrameSeconds: Int): StartedEncoder {
         val format =
             MediaFormat.createVideoFormat("video/avc", candidate.width, candidate.height).apply {
                 setInteger(

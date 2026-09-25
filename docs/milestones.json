@@ -3,6 +3,7 @@
   "repository": "zombiebox-cast",
   "productRegistry": "workspace:docs/milestones.json",
   "notes": [
+    "Dev.45: Adds bounded 4K H.264 mirroring negotiation when the sender encoder configures and the receiver has fresh 4K decoder, HLS and display evidence; lower tiers remain as fallbacks. Protocol dev.44 is pinned. Actual encoder output and physical 4K playback remain unverified; product gates stay open.",
     "Dev.44: Pins Protocol dev.43's additive YouTube related and playback quality contracts. Cast sender/APK behavior and physical gates are unchanged.",
     "Dev.42: Pins the additive paired AirPlay PIN contract only; Cast sender, APK and physical gates are unchanged.",
     "Dev.41: Pins additive YouTube account contract only; Cast sender, APK and physical gates unchanged.",
@@ -53,6 +54,6 @@
       "remoteURL": "https://github.com/ZombieBox-tv/zombiebox-cast/milestone/2"
     }
   ],
-  "developmentCheckpoint": "v0.1.0-dev.43",
+  "developmentCheckpoint": "v0.1.0-dev.45",
   "remote": "https://github.com/ZombieBox-tv/zombiebox-cast"
 }

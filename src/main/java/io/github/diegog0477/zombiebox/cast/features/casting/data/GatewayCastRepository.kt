@@ -7,6 +7,7 @@ import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastGra
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.CastVideo
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.model.Receiver
 import io.github.diegog0477.zombiebox.cast.features.casting.domain.repository.CastRepository
+import io.github.diegog0477.zombiebox.cast.features.casting.platform.SurfaceEncoderFactory
 import io.github.diegog0477.zombiebox.shared.GatewayApi
 import io.github.diegog0477.zombiebox.shared.companion.CompanionTransport
 import io.github.diegog0477.zombiebox.shared.companion.CompanionWire
@@ -14,7 +15,10 @@ import java.net.URI
 import java.util.UUID
 import org.json.JSONObject
 
-class GatewayCastRepository(private val prefs: SharedPreferences) : CastRepository {
+open class GatewayCastRepository(
+    private val prefs: SharedPreferences,
+    private val canEncode4K: () -> Boolean = { SurfaceEncoderFactory.probe4K() },
+) : CastRepository {
     private val api =
         GatewayApi().apply {
             configure(
@@ -132,7 +136,53 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
             }
     }
 
+    internal fun targetMaxVideoHeight(mode: CaptureMode): Int {
+        return if (mode == CaptureMode.SCREEN && canEncode4K()) 2160 else 1080
+    }
+
+    internal fun parseGrantData(
+        id: String,
+        host: String,
+        port: Int,
+        path: String,
+        user: String,
+        token: String,
+        mode: CaptureMode,
+        grantMode: String = "",
+        videoWidth: Int? = null,
+        videoHeight: Int? = null,
+        videoFps: Int? = null,
+        videoBitrate: Int? = null,
+    ): CastGrant {
+        try {
+            check(mode.acceptsGrant(grantMode)) {
+                "Gateway does not support the requested capture mode"
+            }
+            return CastGrant(
+                id,
+                host,
+                port,
+                path,
+                user,
+                token,
+                CastVideo(
+                    videoWidth ?: 640,
+                    videoHeight ?: 360,
+                    videoFps ?: 24,
+                    videoBitrate ?: 800000,
+                ),
+                mode,
+            )
+        } catch (error: Exception) {
+            try {
+                stop(id)
+            } catch (_: Exception) {}
+            throw error
+        }
+    }
+
     override fun create(receiver: String, mode: CaptureMode): CastGrant {
+        val maxHeight = targetMaxVideoHeight(mode)
         val result =
             request(
                 "POST",
@@ -141,7 +191,7 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
                     .put("receiverId", receiver)
                     .put("mode", mode.name)
                     .put("replaceExisting", true)
-                    .put("maxVideoHeight", 1080),
+                    .put("maxVideoHeight", maxHeight),
             )
         val id = result.getString("castId")
         try {
@@ -157,28 +207,27 @@ class GatewayCastRepository(private val prefs: SharedPreferences) : CastReposito
                         audio.getInt("bitrate") == 128000
                 )
             }
+            val video = result.optJSONObject("video")
+            return parseGrantData(
+                id,
+                URI(api.base).host ?: "localhost",
+                result.getInt("rtspPort"),
+                result.getString("publishPath"),
+                result.getString("publishUser"),
+                result.getString("publishToken"),
+                mode,
+                result.optString("mode"),
+                video?.optInt("maxWidth", 640),
+                video?.optInt("maxHeight", 360),
+                video?.optInt("fps", 24),
+                video?.optInt("bitrate", 800000),
+            )
         } catch (error: Exception) {
             try {
                 stop(id)
             } catch (_: Exception) {}
             throw error
         }
-        val video = result.optJSONObject("video")
-        return CastGrant(
-            result.getString("castId"),
-            URI(api.base).host,
-            result.getInt("rtspPort"),
-            result.getString("publishPath"),
-            result.getString("publishUser"),
-            result.getString("publishToken"),
-            CastVideo(
-                video?.optInt("maxWidth", 640) ?: 640,
-                video?.optInt("maxHeight", 360) ?: 360,
-                video?.optInt("fps", 24) ?: 24,
-                video?.optInt("bitrate", 800000) ?: 800000,
-            ),
-            mode,
-        )
     }
 
     override fun stop(id: String) {

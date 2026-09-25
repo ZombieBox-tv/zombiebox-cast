@@ -19,13 +19,19 @@ data class CastVideo(
     val bitrate: Int = 800000,
 ) {
     init {
-        require(maxWidth in 32..1920 && maxHeight in 32..1080)
-        require(fps in 10..30 && bitrate in 128000..4000000)
+        require(maxWidth in 32..3840 && maxHeight in 32..2160)
+        require(fps in 10..30 && bitrate in 128000..12000000)
     }
 
     fun fallbacks(): List<CastVideo> =
         listOf(
                 this,
+                copy(
+                    maxWidth = minOf(maxWidth, 1920),
+                    maxHeight = minOf(maxHeight, 1080),
+                    fps = minOf(fps, 30),
+                    bitrate = minOf(bitrate, 4000000),
+                ),
                 copy(
                     maxWidth = minOf(maxWidth, 1280),
                     maxHeight = minOf(maxHeight, 720),

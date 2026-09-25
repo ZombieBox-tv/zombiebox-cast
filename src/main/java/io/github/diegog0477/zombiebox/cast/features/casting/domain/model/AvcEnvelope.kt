@@ -7,7 +7,10 @@ object AvcEnvelope {
             return false
         val level = sps[3].toInt() and 255
         val ceiling =
-            if (width > 1280 || height > 720) 40 else if (width > 640 || height > 480) 31 else 30
-        return level in listOf(10, 11, 12, 13, 20, 21, 22, 30, 31, 32, 40) && level <= ceiling
+            if (width > 1920 || height > 1080) 51
+            else if (width > 1280 || height > 720) 40
+            else if (width > 640 || height > 480) 31 else 30
+        return level in listOf(10, 11, 12, 13, 20, 21, 22, 30, 31, 32, 40, 41, 42, 50, 51) &&
+            level <= ceiling
     }
 }

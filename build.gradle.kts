@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.diegog0477.zombiebox.cast"
         minSdk = 21
         targetSdk = 35
-        versionCode = 43
-        versionName = "0.1.0-dev.43"
+        versionCode = 45
+        versionName = "0.1.0-dev.45"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
