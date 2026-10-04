@@ -3,9 +3,14 @@ package io.github.diegog0477.zombiebox.cast.features.companion.data
 import android.content.SharedPreferences
 import android.os.Build
 import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.CompanionRepository
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingGrantUnavailableException
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingJoinNetworkException
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingRequestExpiredException
 import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.TrustedTarget
 import io.github.diegog0477.zombiebox.shared.GatewayDiscovery
+import io.github.diegog0477.zombiebox.shared.GatewayFailure
 import io.github.diegog0477.zombiebox.shared.companion.*
+import java.io.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -13,7 +18,6 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
     private companion object {
         const val PENDING_KEY = "companionPendingAttempt"
         const val GATEWAY_HINT_KEY = "companionGatewayHint"
-        const val PENDING_LIFETIME_MS = 24 * 60 * 60 * 1000L
     }
 
     override val paired
@@ -37,14 +41,19 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
 
     override fun join(address: String, targetId: String, qr: String): PairingAttempt {
         val attempt =
-            CompanionWire.join(
-                address,
-                "",
-                qr,
-                (Build.MANUFACTURER + " " + Build.MODEL).take(80),
-                targetId = if (qr.isEmpty()) targetId else "",
-                clientKey = clientKey(),
-            )
+            try {
+                CompanionWire.join(
+                    address,
+                    "",
+                    qr,
+                    (Build.MANUFACTURER + " " + Build.MODEL).take(80),
+                    targetId = if (qr.isEmpty()) targetId else "",
+                    clientKey = clientKey(),
+                )
+            } catch (error: IOException) {
+                if (qr.isNotEmpty()) throw PairingJoinNetworkException(error)
+                throw error
+            }
         storePending(attempt)
         if (address.isNotBlank()) {
             try {
@@ -56,7 +65,13 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
         return attempt
     }
 
-    override fun await(attempt: PairingAttempt) = CompanionWire.await(attempt)
+    override fun await(attempt: PairingAttempt): PairingRequest =
+        try {
+            CompanionWire.await(attempt)
+        } catch (error: GatewayFailure) {
+            if (error.status == 410) throw PairingRequestExpiredException(error)
+            throw error
+        }
 
     private fun current() =
         JSONObject()
@@ -127,8 +142,7 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
         val raw = prefs.getString(PENDING_KEY, null) ?: return null
         return try {
             val value = JSONObject(raw)
-            val age = System.currentTimeMillis() - value.getLong("savedAt")
-            require(age in -300000L..PENDING_LIFETIME_MS)
+            value.getLong("savedAt")
             val id = value.getString("id")
             val token = value.getString("token")
             require(id.matches(Regex("[0-9a-f]{32}")))
@@ -177,8 +191,11 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
         return candidates.toList()
     }
 
+    private class CandidateFailure(val allCandidatesDenied: Boolean, cause: Exception?) :
+        IllegalStateException("Trusted gateway unavailable", cause)
+
     private fun checkedAtCandidates(profile: JSONObject): Pair<JSONObject, CompanionStatus> {
-        var failure: Exception? = null
+        val failures = mutableListOf<Exception>()
         val tried = LinkedHashSet<String>()
         fun checkAddress(address: String): Pair<JSONObject, CompanionStatus>? {
             if (!tried.add(address)) return null
@@ -187,7 +204,7 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
                 val status = checked(candidate)
                 if (status.grant.id == candidate.getString("id")) return Pair(candidate, status)
             } catch (error: Exception) {
-                failure = error
+                failures.add(error)
             }
             return null
         }
@@ -205,7 +222,10 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
         } catch (_: Exception) {
             // Discovery supplies only routing candidates; prior/manual URLs remain usable.
         }
-        throw IllegalStateException("Trusted gateway unavailable", failure)
+        throw CandidateFailure(
+            failures.isNotEmpty() && failures.all { it is GatewayFailure && it.status == 403 },
+            failures.lastOrNull(),
+        )
     }
 
     override fun activate(attempt: PairingAttempt): CompanionStatus {
@@ -220,7 +240,13 @@ class GatewayCompanionRepository(private val prefs: SharedPreferences) : Compani
                 .put("gateway", attempt.gateway)
                 .put("id", attempt.request.id)
                 .put("token", attempt.token)
-        val (verified, status) = checkedAtCandidates(profile)
+        val (verified, status) =
+            try {
+                checkedAtCandidates(profile)
+            } catch (error: CandidateFailure) {
+                if (error.allCandidatesDenied) throw PairingGrantUnavailableException(error)
+                throw error
+            }
         check(status.grant.targetId == attempt.request.targetId)
         save(verified, status, clearPending = true)
         return status

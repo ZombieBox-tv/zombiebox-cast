@@ -277,6 +277,10 @@ class CastDashboard(
         val target = state.target
         val detail =
             when {
+                state.failure == CompanionViewModel.Failure.QR_NETWORK ->
+                    context.getString(R.string.pair_qr_network_failed)
+                state.failure == CompanionViewModel.Failure.EXPIRED ->
+                    context.getString(R.string.pair_expired)
                 state.failed -> context.getString(R.string.pair_failed)
                 state.phase == "PENDING" ->
                     context.getString(R.string.pair_compare, state.comparison)

@@ -172,7 +172,7 @@ class CastActivity : Activity() {
                 this,
                 ::pairPhone,
                 {
-                    companion.refresh(reconnect = !ProjectionService.active && !capturePending)
+                    companion.retry(reconnect = !ProjectionService.active && !capturePending)
                     if (repository.paired) model.refresh()
                 },
                 ::beginCapture,

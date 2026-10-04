@@ -1,6 +1,9 @@
 package io.github.diegog0477.zombiebox.cast.features.companion.presentation.viewmodel
 
 import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.CompanionRepository
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingGrantUnavailableException
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingJoinNetworkException
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingRequestExpiredException
 import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.TrustedTarget
 import io.github.diegog0477.zombiebox.shared.companion.*
 
@@ -9,9 +12,16 @@ class CompanionViewModel(
     private val execute: (() -> Unit) -> Unit,
     private val deliver: (() -> Unit) -> Unit,
 ) {
+    enum class Failure {
+        GENERAL,
+        QR_NETWORK,
+        EXPIRED,
+    }
+
     data class State(
         val busy: Boolean = false,
         val failed: Boolean = false,
+        val failure: Failure? = null,
         val comparison: String = "",
         val phase: String = "",
         val target: CompanionStatus? = null,
@@ -41,13 +51,20 @@ class CompanionViewModel(
         }
 
     fun join(address: String, targetId: String, qr: String) =
-        work(defer = true) {
+        work(
+            defer = true,
+            failureFor = {
+                if (it is PairingJoinNetworkException) Failure.QR_NETWORK else Failure.GENERAL
+            },
+        ) {
             val attempt = repository.join(address, targetId, qr)
             pending = attempt
             if (attempt.request.state == "APPROVED") {
                 complete(attempt)
             } else
                 state.copy(
+                    failed = false,
+                    failure = null,
                     comparison = attempt.request.comparison,
                     phase = attempt.request.state,
                     target = null,
@@ -55,41 +72,74 @@ class CompanionViewModel(
                 )
         }
 
-    fun refresh(reconnect: Boolean = false) = work {
-        val attempt = repository.pendingAttempt()
-        pending = attempt
-        if (attempt != null) {
-            val request =
-                try {
-                    repository.await(attempt)
-                } catch (statusError: Exception) {
-                    // A grant can remain valid after its short-lived request status expires.
-                    // Activation still proves the gateway and authenticates this exact grant.
+    fun refresh(reconnect: Boolean = false) = refreshState(reconnect, retry = false)
+
+    fun retry(reconnect: Boolean = false) = refreshState(reconnect, retry = true)
+
+    private fun refreshState(reconnect: Boolean, retry: Boolean) =
+        work(clearFailure = retry, preserveFailure = true) {
+            val attempt = repository.pendingAttempt()
+            pending = attempt
+            if (attempt != null) {
+                val request =
                     try {
-                        return@work complete(attempt)
-                    } catch (_: Exception) {
-                        throw statusError
+                        repository.await(attempt)
+                    } catch (statusError: Exception) {
+                        try {
+                            return@work complete(attempt)
+                        } catch (proofError: Exception) {
+                            if (
+                                statusError is PairingRequestExpiredException &&
+                                    proofError is PairingGrantUnavailableException
+                            ) {
+                                repository.discardPending()
+                                pending = null
+                                return@work state.copy(
+                                    comparison = "",
+                                    phase = "EXPIRED",
+                                    target = null,
+                                    nearby = emptyList(),
+                                    failed = true,
+                                    failure = Failure.EXPIRED,
+                                )
+                            }
+                            if (proofError is PairingGrantUnavailableException) throw statusError
+                            throw proofError
+                        }
                     }
+                if (request.state == "APPROVED") {
+                    complete(attempt)
+                } else {
+                    if (request.state == "DENIED") {
+                        repository.discardPending()
+                        pending = null
+                    }
+                    state.copy(
+                        comparison = request.comparison,
+                        phase = request.state,
+                        failed = false,
+                        failure = null,
+                    )
                 }
-            if (request.state == "APPROVED") {
-                complete(attempt)
-            } else {
-                if (request.state == "DENIED") {
-                    repository.discardPending()
-                    pending = null
-                }
-                state.copy(comparison = request.comparison, phase = request.state)
-            }
-        } else if (repository.paired) {
-            state.copy(
-                target = if (reconnect) repository.reconnect() else repository.status(),
-                phase = "CONNECTED",
-                comparison = "",
-                targets = repository.targets(),
-            )
-        } else
-            state.copy(target = null, phase = "", comparison = "", targets = repository.targets())
-    }
+            } else if (repository.paired) {
+                state.copy(
+                    target = if (reconnect) repository.reconnect() else repository.status(),
+                    phase = "CONNECTED",
+                    comparison = "",
+                    targets = repository.targets(),
+                    failed = false,
+                    failure = null,
+                )
+            } else
+                state.copy(
+                    target = null,
+                    phase = "",
+                    comparison = "",
+                    targets = repository.targets(),
+                    failed = false,
+                    failure = null,
+                )
+        }
 
     fun send(action: String, provider: String = "") {
         if (state.target?.remoteOnline != true) return
@@ -129,6 +179,8 @@ class CompanionViewModel(
         val target = repository.activate(attempt)
         pending = null
         return state.copy(
+            failed = false,
+            failure = null,
             comparison = "",
             phase = "APPROVED",
             target = target,
@@ -137,21 +189,44 @@ class CompanionViewModel(
         )
     }
 
-    private fun work(defer: Boolean = false, task: () -> State) {
+    private fun work(
+        defer: Boolean = false,
+        clearFailure: Boolean = true,
+        preserveFailure: Boolean = false,
+        failureFor: (Exception) -> Failure = { Failure.GENERAL },
+        task: () -> State,
+    ) {
         if (closed) return
         if (state.busy) {
-            if (defer) deferred = { work(true, task) }
+            if (defer) deferred = { work(true, clearFailure, preserveFailure, failureFor, task) }
             return
         }
-        state = state.copy(busy = true, failed = false)
+        val retainedFailure = if (preserveFailure && !clearFailure) state.failure else null
+        state = state.copy(busy = true, failed = retainedFailure != null, failure = retainedFailure)
         observer?.invoke(state)
         pairingObserver?.invoke(state)
         execute {
             val next =
                 try {
-                    task().copy(busy = false, failed = false)
-                } catch (_: Exception) {
-                    state.copy(busy = false, failed = true)
+                    val value = task()
+                    val failure =
+                        value.failure
+                            ?: if (
+                                value.phase in
+                                    listOf(
+                                        "APPROVED",
+                                        "CONNECTED",
+                                        "DENIED",
+                                        "EXPIRED",
+                                        "FORGOTTEN",
+                                    )
+                            )
+                                null
+                            else retainedFailure
+                    value.copy(busy = false, failed = failure != null, failure = failure)
+                } catch (error: Exception) {
+                    val failure = retainedFailure ?: failureFor(error)
+                    state.copy(busy = false, failed = true, failure = failure)
                 }
             deliver {
                 if (!closed) {

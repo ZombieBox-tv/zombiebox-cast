@@ -83,6 +83,14 @@
     <string name="pair_compare">Confirma %1$s en la TV y elige Permitir.</string>
     <string name="pair_connected">Emparejado con %1$s</string>
     <string name="pair_denied">Emparejamiento rechazado. Inicia de nuevo desde la TV.</string>
+    <string name="pair_expired">
+        La solicitud de emparejamiento caducó y no queda una autorización aprobada. Escanea un QR
+        nuevo de la TV.
+    </string>
+    <string name="pair_qr_network_failed">
+        No se pudo contactar con el gateway del QR. Comprueba que el teléfono pueda acceder a la
+        red del gateway y escanea el QR otra vez.
+    </string>
     <string name="pair_failed">
         No se pudo contactar o emparejar con la TV. Revisa la red, actualiza o solicita otro código.
     </string>

@@ -75,6 +75,13 @@
     <string name="pair_compare">Confirm %1$s on the TV, then choose Allow.</string>
     <string name="pair_connected">Paired with %1$s</string>
     <string name="pair_denied">Pairing declined. Start again from the TV.</string>
+    <string name="pair_expired">
+        The pairing request expired and no approved grant remains. Scan a new TV QR.
+    </string>
+    <string name="pair_qr_network_failed">
+        Could not reach the QR gateway. Check that this phone can reach the gateway network, then
+        scan the QR again.
+    </string>
     <string name="pair_failed">
         Could not reach or pair with this TV. Check the network, refresh or request a new code.
     </string>

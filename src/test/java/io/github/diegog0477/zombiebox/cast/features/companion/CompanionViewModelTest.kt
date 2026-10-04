@@ -1,6 +1,9 @@
 package io.github.diegog0477.zombiebox.cast.features.companion
 
 import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.CompanionRepository
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingGrantUnavailableException
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingJoinNetworkException
+import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.PairingRequestExpiredException
 import io.github.diegog0477.zombiebox.cast.features.companion.domain.repository.TrustedTarget
 import io.github.diegog0477.zombiebox.cast.features.companion.presentation.viewmodel.CompanionViewModel
 import io.github.diegog0477.zombiebox.shared.companion.*
@@ -19,8 +22,13 @@ class CompanionViewModelTest {
         var pending: PairingAttempt? = null
         var statusExpired = false
         var activationFails = false
+        var grantValid = false
+        var awaitFailure: Exception? = null
+        var activationFailure: Exception? = null
+        var joinFailure: Exception? = null
 
         override fun join(address: String, targetId: String, qr: String): PairingAttempt {
+            joinFailure?.let { throw it }
             val attempt =
                 PairingAttempt(
                     address,
@@ -34,6 +42,7 @@ class CompanionViewModelTest {
         override fun nearbyTargets(address: String) = listOf(PairingTarget("tv", "Living room"))
 
         override fun await(attempt: PairingAttempt): PairingRequest {
+            awaitFailure?.let { throw it }
             if (statusExpired) throw IllegalStateException("request expired")
             return attempt.request.copy(state = phase)
         }
@@ -45,8 +54,10 @@ class CompanionViewModelTest {
         }
 
         override fun activate(attempt: PairingAttempt): CompanionStatus {
-            check(phase == "APPROVED")
+            activationFailure?.let { throw it }
             if (activationFails) throw IllegalStateException("proof unavailable")
+            if (!grantValid && phase != "APPROVED")
+                throw PairingGrantUnavailableException(IllegalStateException("grant missing"))
             paired = true
             pending = null
             return status()
@@ -176,20 +187,84 @@ class CompanionViewModelTest {
     }
 
     @Test
-    fun expiredRequestCanRecoverOnlyThroughVerifiedGrant() {
-        val repo = Fake().apply { statusExpired = true }
+    fun expiredRequestWithMissingGrantIsTerminal() {
+        val repo =
+            Fake().apply {
+                statusExpired = true
+                awaitFailure =
+                    PairingRequestExpiredException(IllegalStateException("request expired"))
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("http://gateway", "tv", "")
+        model.refresh()
+        assertFalse(repo.paired)
+        assertNull(repo.pending)
+        assertEquals("EXPIRED", model.state.phase)
+        assertEquals(CompanionViewModel.Failure.EXPIRED, model.state.failure)
+    }
+
+    @Test
+    fun expiredStatusStillActivatesAValidGrant() {
+        val repo =
+            Fake().apply {
+                statusExpired = true
+                awaitFailure =
+                    PairingRequestExpiredException(IllegalStateException("request expired"))
+                grantValid = true
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("http://gateway", "tv", "")
+        model.refresh()
+        assertTrue(repo.paired)
+        assertNull(repo.pending)
+        assertEquals("APPROVED", model.state.phase)
+    }
+
+    @Test
+    fun requestTimeoutDoesNotAbandonPendingAttempt() {
+        val repo = Fake().apply { awaitFailure = java.net.SocketTimeoutException("timeout") }
         val model = CompanionViewModel(repo, { it() }, { it() })
         model.join("http://gateway", "tv", "")
         model.refresh()
         assertFalse(repo.paired)
         assertTrue(model.state.failed)
         assertNotNull(repo.pending)
+    }
 
-        repo.phase = "APPROVED"
-        val resumed = CompanionViewModel(repo, { it() }, { it() })
-        resumed.refresh()
-        assertTrue(repo.paired)
-        assertEquals("APPROVED", resumed.state.phase)
+    @Test
+    fun proofTransportFailureDoesNotAbandonExpiredPendingAttempt() {
+        val repo =
+            Fake().apply {
+                awaitFailure =
+                    PairingRequestExpiredException(IllegalStateException("request expired"))
+                activationFailure = java.net.SocketTimeoutException("proof timeout")
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("http://gateway", "tv", "")
+        model.refresh()
+        assertFalse(repo.paired)
+        assertTrue(model.state.failed)
+        assertNotNull(repo.pending)
+    }
+
+    @Test
+    fun qrNetworkFailureSurvivesAutomaticRefreshUntilRetry() {
+        val repo =
+            Fake().apply {
+                joinFailure =
+                    PairingJoinNetworkException(java.net.SocketTimeoutException("timeout"))
+            }
+        val model = CompanionViewModel(repo, { it() }, { it() })
+        model.join("", "", "scanned QR")
+        assertEquals(CompanionViewModel.Failure.QR_NETWORK, model.state.failure)
+
+        model.refresh()
+        assertEquals(CompanionViewModel.Failure.QR_NETWORK, model.state.failure)
+        assertTrue(model.state.failed)
+
+        model.retry()
+        assertNull(model.state.failure)
+        assertFalse(model.state.failed)
     }
 
     @Test

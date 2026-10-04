@@ -4,6 +4,15 @@ import io.github.diegog0477.zombiebox.shared.companion.*
 
 data class TrustedTarget(val id: String, val name: String)
 
+class PairingJoinNetworkException(cause: Exception) :
+    Exception("Could not reach the gateway from the pairing QR", cause)
+
+class PairingRequestExpiredException(cause: Exception) :
+    Exception("The pairing request expired", cause)
+
+class PairingGrantUnavailableException(cause: Exception) :
+    Exception("The approved pairing grant is unavailable", cause)
+
 interface CompanionRepository {
     val paired: Boolean
 
